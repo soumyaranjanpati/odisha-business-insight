@@ -17,13 +17,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger on auth.users (run with sufficient privileges in Supabase)
--- In Supabase Dashboard: Database -> Extensions -> enable if needed
--- Then run:
--- DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
--- CREATE TRIGGER on_auth_user_created
---   AFTER INSERT ON auth.users
---   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- Note: In Supabase, this trigger is often created in Dashboard under Auth -> Hooks or Database -> Triggers.
--- If your project uses Supabase Auth signups, add the trigger in Dashboard pointing to public.handle_new_user.
+-- Trigger on auth.users: must be created via SQL Editor (Dashboard Triggers UI
+-- cannot create triggers on the protected auth schema).
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

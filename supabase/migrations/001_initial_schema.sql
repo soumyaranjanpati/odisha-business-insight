@@ -200,6 +200,27 @@ CREATE TRIGGER comments_updated_at
   FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
 
 -- ============================================================
+-- HELPER FUNCTIONS FOR RLS (must exist before policies)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS TEXT AS $$
+  SELECT r.name FROM public.user_profiles up
+  JOIN public.roles r ON up.role_id = r.id
+  WHERE up.id = auth.uid()
+  LIMIT 1;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT public.get_user_role() = 'admin';
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.is_editor_or_admin()
+RETURNS BOOLEAN AS $$
+  SELECT public.get_user_role() IN ('editor', 'admin');
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- ============================================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================================
 ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
@@ -280,27 +301,6 @@ CREATE POLICY "saved_articles_delete_own" ON public.saved_articles FOR DELETE
 -- Newsletter: service role / API only (no direct user insert for spam control)
 -- Contact: service role / API only
 -- We'll use service role in server actions for newsletter and contact
-
--- ============================================================
--- HELPER FUNCTIONS FOR RLS
--- ============================================================
-CREATE OR REPLACE FUNCTION public.get_user_role()
-RETURNS TEXT AS $$
-  SELECT r.name FROM public.user_profiles up
-  JOIN public.roles r ON up.role_id = r.id
-  WHERE up.id = auth.uid()
-  LIMIT 1;
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN AS $$
-  SELECT public.get_user_role() = 'admin';
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
-CREATE OR REPLACE FUNCTION public.is_editor_or_admin()
-RETURNS BOOLEAN AS $$
-  SELECT public.get_user_role() IN ('editor', 'admin');
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ============================================================
 -- STORAGE BUCKET (run in Supabase dashboard or via API)

@@ -1,55 +1,162 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
+export type NavAuth = {
+  user: { id: string; email?: string } | null;
+  profile: { id: string; roleName: UserRole; display_name: string | null } | null;
+};
+
+const CATEGORY_LINKS = [
   { href: "/category/economy", label: "Economy" },
   { href: "/category/msme", label: "MSME" },
   { href: "/category/startups", label: "Startups" },
   { href: "/category/policy", label: "Policy" },
   { href: "/category/infrastructure", label: "Infrastructure" },
   { href: "/category/markets", label: "Markets" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
 ];
 
-export function Header() {
+export function Header({ auth }: { auth: NavAuth }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const { user, profile } = auth;
+  const role: UserRole | null = profile?.roleName ?? null;
+  const isEditor = role === "editor" || role === "admin";
+  const isAdmin = role === "admin";
+  const displayName = profile?.display_name?.trim() || user?.email?.split("@")[0] || "User";
+
+  const link = (href: string, label: string) => (
+    <Link
+      key={href}
+      href={href}
+      className={cn(
+        "rounded px-3 py-2 text-sm font-medium text-white transition-colors",
+        pathname === href ? "bg-white/20" : "hover:bg-white/10"
+      )}
+    >
+      {label}
+    </Link>
+  );
+
+  // Desktop: hover; Mobile: click
+  const handleCategoriesEnter = () => {
+    if (window.innerWidth >= 768) setCategoriesOpen(true);
+  };
+  const handleCategoriesLeave = () => {
+    if (window.innerWidth >= 768) setCategoriesOpen(false);
+  };
+  const handleCategoriesClick = () => {
+    if (window.innerWidth < 768) setCategoriesOpen((o) => !o);
+  };
+
+  // Keyboard: Escape to close, Enter/Space to toggle
+  const handleCategoriesKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") setCategoriesOpen(false);
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (window.innerWidth < 768) setCategoriesOpen((o) => !o);
+      else setCategoriesOpen(true);
+    }
+  };
+
+  // Close mobile menu on click outside
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-fb-hover bg-fb shadow-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="headline text-xl font-bold text-ink hover:text-primary-700 sm:text-2xl"
+          className="flex shrink-0 items-center transition-opacity hover:opacity-90"
+          aria-label="Odisha Business Insight - Home"
         >
-          Odisha Business Insight
+          <Image
+            src="/logo.png"
+            alt="Odisha Business Insight"
+            width={220}
+            height={56}
+            className="h-10 w-auto sm:h-12"
+            priority
+          />
         </Link>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.slice(0, 7).map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
+          {link("/", "Home")}
+          <div
+            ref={categoriesRef}
+            className="relative"
+            onMouseEnter={handleCategoriesEnter}
+            onMouseLeave={handleCategoriesLeave}
+          >
+            <button
+              type="button"
+              onClick={handleCategoriesClick}
+              onKeyDown={handleCategoriesKeyDown}
+              aria-expanded={categoriesOpen}
+              aria-haspopup="true"
+              aria-controls="categories-menu"
+              id="categories-trigger"
               className={cn(
-                "rounded px-3 py-2 text-sm font-medium transition-colors",
-                pathname === link.href
-                  ? "bg-gray-100 text-ink"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-ink"
+                "rounded px-3 py-2 text-sm font-medium text-white transition-colors duration-200",
+                categoriesOpen ? "bg-white/20" : "hover:bg-white/10"
               )}
             >
-              {link.label}
+              Categories
+            </button>
+            <div
+              id="categories-menu"
+              role="menu"
+              aria-labelledby="categories-trigger"
+              className={cn(
+                "absolute left-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-md border border-fb-footer-border bg-fb-dark shadow-lg transition-all duration-200 ease-out",
+                categoriesOpen ? "visible translate-y-0 opacity-100" : "pointer-events-none invisible -translate-y-1 opacity-0"
+              )}
+            >
+              {CATEGORY_LINKS.map((c) => (
+                <Link
+                  key={c.href}
+                  href={c.href}
+                  role="menuitem"
+                  className="block px-4 py-2 text-sm text-white transition-colors hover:bg-white/10"
+                  onClick={() => setCategoriesOpen(false)}
+                >
+                  {c.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          {isEditor && link("/editor", "My Posts")}
+          {isEditor && (
+            <Link
+              href="/editor/new"
+              className="rounded bg-white px-4 py-2 text-sm font-medium text-fb shadow-sm hover:bg-gray-100"
+            >
+              Add Post
             </Link>
-          ))}
+          )}
+          {isAdmin && link("/admin/users", "Users")}
+          {isAdmin && link("/admin", "Admin Panel")}
           <Link
             href="/search"
-            className="rounded px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-ink"
+            className="rounded px-3 py-2 text-sm font-medium text-white hover:bg-white/10"
             aria-label="Search"
           >
             Search
@@ -59,21 +166,59 @@ export function Header() {
         <div className="flex items-center gap-2">
           <Link
             href="/search"
-            className="rounded p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+            className="rounded p-2 text-white hover:bg-white/10 md:hidden"
             aria-label="Search"
           >
             <SearchIcon className="h-5 w-5" />
           </Link>
-          <Link
-            href="/login"
-            className="hidden rounded bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 md:block"
-          >
-            Editor Login
-          </Link>
+          {!user ? (
+            <>
+              <Link
+                href="/auth/login"
+                className="hidden rounded bg-white px-4 py-2 text-sm font-medium text-fb hover:bg-gray-100 md:block"
+              >
+                Login
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="hidden rounded border border-white/80 bg-transparent px-4 py-2 text-sm font-medium text-white hover:bg-white/10 md:block"
+              >
+                Signup
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/profile"
+                className="hidden rounded px-3 py-2 text-sm font-medium text-white hover:bg-white/10 md:block"
+              >
+                Profile
+              </Link>
+              <span className="hidden text-sm font-medium text-white md:inline">
+                Hi, {displayName}
+                {role && (
+                  <span className="ml-1.5 rounded bg-white/20 px-1.5 py-0.5 text-xs" title="Your role">
+                    ({role})
+                  </span>
+                )}
+              </span>
+              <form action="/api/auth/signout" method="post" className="hidden md:block">
+                <button
+                  type="submit"
+                  className="rounded px-3 py-2 text-sm font-medium text-white hover:bg-white/10"
+                >
+                  Logout
+                </button>
+              </form>
+            </>
+          )}
           <button
             type="button"
-            className="rounded p-2 text-gray-600 hover:bg-gray-100 md:hidden"
-            onClick={() => setMobileOpen((o) => !o)}
+            className="rounded p-2 text-white hover:bg-white/10 md:hidden"
+            onClick={(e) => {
+              e.stopPropagation();
+              setMobileOpen((o) => !o);
+            }}
             aria-expanded={mobileOpen}
             aria-label="Toggle menu"
           >
@@ -88,31 +233,99 @@ export function Header() {
 
       {/* Mobile nav */}
       {mobileOpen && (
-        <nav className="border-t border-gray-200 bg-white px-4 py-3 md:hidden">
+        <nav
+          className="border-t border-fb-hover bg-fb-dark px-4 py-3 md:hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
           <ul className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
+            <li>{link("/", "Home")}</li>
+            <li>
+              <span className="block px-3 py-2 text-sm font-medium text-white/80">Categories</span>
+              <ul className="pl-4">
+                {CATEGORY_LINKS.map((c) => (
+                  <li key={c.href}>
+                    <Link
+                      href={c.href}
+                      className="block rounded px-3 py-2 text-sm text-white hover:bg-white/10"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {c.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+            {isEditor && <li>{link("/editor", "My Posts")}</li>}
+            {isEditor && (
+              <li>
                 <Link
-                  href={link.href}
-                  className={cn(
-                    "block rounded px-3 py-2 text-sm font-medium",
-                    pathname === link.href ? "bg-gray-100 text-ink" : "text-gray-600"
-                  )}
+                  href="/editor/new"
+                  className="block rounded bg-white px-3 py-2 text-sm font-medium text-fb"
                   onClick={() => setMobileOpen(false)}
                 >
-                  {link.label}
+                  Add Post
                 </Link>
               </li>
-            ))}
+            )}
+            {isAdmin && <li>{link("/admin/users", "Users")}</li>}
+            {isAdmin && <li>{link("/admin", "Admin Panel")}</li>}
             <li>
               <Link
-                href="/login"
-                className="block rounded bg-primary-600 px-3 py-2 text-sm font-medium text-white"
+                href="/search"
+                className="block rounded px-3 py-2 text-sm text-white hover:bg-white/10"
                 onClick={() => setMobileOpen(false)}
               >
-                Editor Login
+                Search
               </Link>
             </li>
+            {!user ? (
+              <>
+                <li>
+                  <Link
+                    href="/auth/login"
+                    className="block rounded bg-white px-3 py-2 text-sm font-medium text-fb"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Login
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/auth/signup"
+                    className="block rounded border border-white/80 px-3 py-2 text-sm font-medium text-white"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Signup
+                  </Link>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link
+                    href="/profile"
+                    className="block rounded px-3 py-2 text-sm text-white hover:bg-white/10"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                </li>
+                <li className="rounded px-3 py-2 text-sm text-white">
+                  Hi, {displayName}
+                  {role && <span className="ml-1.5 text-white/80">({role})</span>}
+                </li>
+                <li>
+                  <form action="/api/auth/signout" method="post">
+                    <button
+                      type="submit"
+                      className="block w-full rounded px-3 py-2 text-left text-sm text-white hover:bg-white/10"
+                    >
+                      Logout
+                    </button>
+                  </form>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
       )}

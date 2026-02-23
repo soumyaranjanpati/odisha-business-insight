@@ -30,6 +30,9 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
     const form = e.currentTarget;
     const formData = new FormData(form);
     const tagIds = form.getAll("tag_ids") as string[];
+    const action = formData.get("submit_action") as string | null;
+    const status: ArticleStatus =
+      action === "publish" ? "published" : action === "pending" ? "pending" : "draft";
 
     startTransition(async () => {
       const result = await createOrUpdateArticle({
@@ -40,7 +43,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
         body: formData.get("body") as string,
         category_id: formData.get("category_id") as string,
         tag_ids: tagIds,
-        status: formData.get("status") as ArticleStatus,
+        status,
         featured_image_url: (formData.get("featured_image_url") as string) || null,
         featured_image_alt: (formData.get("featured_image_alt") as string) || null,
         meta_title: (formData.get("meta_title") as string) || null,
@@ -78,32 +81,32 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
             placeholder="article-url-slug"
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Excerpt</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Summary</label>
             <textarea
               name="excerpt"
               rows={2}
               defaultValue={article?.excerpt ?? ""}
               className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-              placeholder="Short summary for listings"
+              placeholder="Short summary for listings and cards"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Body (HTML)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Content</label>
             <textarea
               name="body"
               rows={14}
               required
               defaultValue={article?.body ?? ""}
-              className="block w-full rounded-lg border border-gray-300 font-mono text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-              placeholder="<p>Your content in HTML...</p>"
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              placeholder="<p>Your content. You can use HTML: &lt;p&gt;, &lt;h2&gt;, &lt;a&gt;, &lt;strong&gt;, &lt;ul&gt;, etc.</p>"
             />
             <p className="mt-1 text-xs text-gray-500">
-              You can use HTML tags (e.g. &lt;p&gt;, &lt;h2&gt;, &lt;a&gt;, &lt;strong&gt;).
+              Use HTML for formatting (e.g. &lt;p&gt;, &lt;h2&gt;, &lt;a&gt;, &lt;strong&gt;).
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Featured image URL"
+              label="Featured image (URL)"
               name="featured_image_url"
               defaultValue={article?.featured_image_url ?? ""}
               placeholder="https://..."
@@ -167,16 +170,8 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Status</label>
-            <select
-              name="status"
-              defaultValue={article?.status ?? "draft"}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 sm:w-48 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-            >
-              <option value="draft">Draft</option>
-              <option value="pending">Pending review</option>
-              <option value="published">Published</option>
-            </select>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Draft / Publish</label>
+            <p className="text-xs text-gray-500">Use the buttons below to save as draft or publish.</p>
           </div>
 
           <div className="border-t border-gray-200 pt-4">
@@ -214,10 +209,35 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
 
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
-      <div className="flex gap-3">
-        <Button type="submit" isLoading={isPending}>
-          {isEdit ? "Update article" : "Create article"}
+      <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4">
+        <Button
+          type="submit"
+          name="submit_action"
+          value="draft"
+          isLoading={isPending}
+          variant="secondary"
+        >
+          Save draft
         </Button>
+        <Button
+          type="submit"
+          name="submit_action"
+          value="publish"
+          isLoading={isPending}
+        >
+          Publish
+        </Button>
+        {isEdit && (
+          <Button
+            type="submit"
+            name="submit_action"
+            value="pending"
+            isLoading={isPending}
+            variant="secondary"
+          >
+            Submit for review
+          </Button>
+        )}
         <Link href="/editor">
           <Button type="button" variant="secondary">
             Cancel

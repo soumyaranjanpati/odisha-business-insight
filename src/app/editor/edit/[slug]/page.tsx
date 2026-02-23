@@ -10,8 +10,10 @@ interface PageProps {
 export default async function EditArticlePage({ params }: PageProps) {
   const { slug } = await params;
   const profile = await getProfile();
+  if (!profile) notFound();
+  const isAdmin = profile.roleName === "admin";
   const [article, categories, tags] = await Promise.all([
-    getArticleBySlugForEditor(slug, profile!.id),
+    getArticleBySlugForEditor(slug, profile.id, isAdmin),
     getCategories(),
     getTags(),
   ]);
@@ -20,7 +22,7 @@ export default async function EditArticlePage({ params }: PageProps) {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Edit Article</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Edit Post</h1>
       <ArticleForm
         categories={categories}
         tags={tags}

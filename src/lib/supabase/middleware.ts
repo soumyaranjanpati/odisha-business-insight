@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
   if (pathname.startsWith("/editor")) {
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = "/auth/login";
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
@@ -48,16 +48,16 @@ export async function updateSession(request: NextRequest) {
   if (pathname.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = "/auth/login";
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
     return response;
   }
 
-  // Redirect logged-in users away from login if they hit /login
-  if (pathname === "/login" && user) {
-    const redirect = request.nextUrl.searchParams.get("redirect") || "/editor";
+  // Redirect logged-in users away from login if they hit /auth/login
+  if (pathname === "/auth/login" && user) {
+    const redirect = request.nextUrl.searchParams.get("redirect") || "/";
     return NextResponse.redirect(new URL(redirect, request.url));
   }
 

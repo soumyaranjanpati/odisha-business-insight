@@ -1,14 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
+import { HeaderWithAuth } from "@/components/layout/HeaderWithAuth";
+import { HeaderSkeleton } from "@/components/layout/HeaderSkeleton";
 import { Footer } from "@/components/layout/Footer";
 import { Preconnect } from "@/components/seo/Preconnect";
 import { getBaseUrl, SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
 
+// Ensure auth (header role) is never cached so role-based nav is correct
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0369a1",
+  themeColor: "#1877F2",
 };
 
 export const metadata: Metadata = {
@@ -52,7 +57,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        <Header />
+        <Suspense fallback={<HeaderSkeleton />}>
+          <HeaderWithAuth />
+        </Suspense>
         <main className="flex-1" id="main-content">
           {children}
         </main>

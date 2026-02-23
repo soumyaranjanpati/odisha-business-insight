@@ -16,17 +16,20 @@ export async function getTags(): Promise<Tag[]> {
   return (data ?? []) as Tag[];
 }
 
+/**
+ * Load article by slug for editor (own only) or admin (any).
+ */
 export async function getArticleBySlugForEditor(
   slug: string,
-  authorId: string
+  userId: string,
+  isAdmin: boolean
 ): Promise<(Article & { tag_ids: string[] }) | null> {
   const supabase = await createClient();
-  const { data: article, error } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("slug", slug)
-    .eq("author_id", authorId)
-    .single();
+  let query = supabase.from("articles").select("*").eq("slug", slug);
+  if (!isAdmin) {
+    query = query.eq("author_id", userId);
+  }
+  const { data: article, error } = await query.single();
 
   if (error || !article) return null;
 

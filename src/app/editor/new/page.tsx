@@ -6,7 +6,7 @@ export default async function NewArticlePage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-ink">New Article</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Add Post</h1>
       <ArticleForm categories={categories} tags={tags} />
     </div>
   );

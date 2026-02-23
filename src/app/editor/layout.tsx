@@ -9,7 +9,7 @@ export default async function EditorLayout({
 }) {
   const { allowed, role } = await requireEditor();
   if (!allowed) {
-    redirect(role ? "/" : "/login?redirect=/editor");
+    redirect(role ? "/" : "/auth/login?redirect=/editor");
   }
 
   return (
@@ -19,24 +19,35 @@ export default async function EditorLayout({
           <Link href="/editor" className="font-semibold text-ink">
             Editor Dashboard
           </Link>
-          <nav className="flex gap-4">
+          <nav className="flex flex-wrap items-center gap-3">
             <Link href="/editor" className="text-sm text-gray-600 hover:text-ink">
-              My Articles
+              My Posts
             </Link>
-            <Link href="/editor/new" className="text-sm text-gray-600 hover:text-ink">
-              New Article
+            <Link
+              href="/editor/new"
+              className="rounded bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              Add Post
             </Link>
             {role === "admin" && (
-              <Link href="/admin" className="text-sm text-primary-600 hover:underline">
-                Admin
+              <Link href="/admin/users" className="text-sm text-primary-600 hover:underline">
+                Users
               </Link>
             )}
+            {role === "admin" && (
+              <Link href="/admin" className="text-sm text-gray-600 hover:text-ink">
+                Admin Panel
+              </Link>
+            )}
+            <Link href="/profile" className="text-sm text-gray-600 hover:text-ink">
+              Profile
+            </Link>
             <Link href="/" className="text-sm text-gray-600 hover:text-ink">
               View site
             </Link>
-            <form action="/api/auth/signout" method="post">
+            <form action="/api/auth/signout" method="post" className="inline">
               <button type="submit" className="text-sm text-gray-600 hover:text-ink">
-                Sign out
+                Logout
               </button>
             </form>
           </nav>

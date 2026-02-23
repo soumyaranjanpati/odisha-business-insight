@@ -131,3 +131,29 @@ export async function createOrUpdateArticle(
 
   return { success: true, slug };
 }
+
+export async function deleteArticle(articleId: string): Promise<{ success: boolean; message?: string }> {
+  const profile = await getProfile();
+  if (!profile) return { success: false, message: "Unauthorized" };
+
+  const role = profile.roleName as string;
+  if (role !== "editor" && role !== "admin") {
+    return { success: false, message: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("articles")
+    .select("id, author_id")
+    .eq("id", articleId)
+    .single();
+
+  if (!existing) return { success: false, message: "Article not found" };
+  if (role === "editor" && existing.author_id !== profile.id) {
+    return { success: false, message: "You can only delete your own articles" };
+  }
+
+  const { error } = await supabase.from("articles").delete().eq("id", articleId);
+  if (error) return { success: false, message: error.message };
+  return { success: true };
+}

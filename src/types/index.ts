@@ -4,7 +4,7 @@
 
 export type ArticleStatus = "draft" | "pending" | "published" | "rejected" | "archived";
 
-export type UserRole = "public" | "subscriber" | "editor" | "admin";
+export type UserRole = "public" | "editor" | "admin";
 
 export interface Role {
   id: string;
@@ -19,6 +19,9 @@ export interface UserProfile {
   role_id: string;
   display_name: string | null;
   avatar_url: string | null;
+  email?: string | null;
+  mobile_number?: string | null;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
   role?: Role;

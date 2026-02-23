@@ -8,7 +8,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const { allowed } = await requireAdmin();
-  if (!allowed) redirect("/login?redirect=/admin");
+  if (!allowed) redirect("/auth/login?redirect=/admin");
 
   return (
     <div className="min-h-screen bg-gray-100">

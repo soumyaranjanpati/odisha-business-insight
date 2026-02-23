@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/types";
 
 /**
@@ -16,6 +16,8 @@ export async function getUser() {
 
 /**
  * Get current user's profile including role name (server only).
+ * Uses service role to read profile when key is set (so we see the latest role);
+ * otherwise falls back to anon client.
  */
 export async function getProfile() {
   const supabase = await createClient();
@@ -24,16 +26,54 @@ export async function getProfile() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile, error } = await supabase
-    .from("user_profiles")
-    .select("*, role:roles(name)")
-    .eq("id", user.id)
+  let profile: {
+    id: string;
+    role_id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    email: string | null;
+    mobile_number: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  } | null = null;
+
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = createServiceRoleClient();
+    const res = await admin
+      .from("user_profiles")
+      .select("id, role_id, display_name, avatar_url, email, mobile_number, is_active, created_at, updated_at")
+      .eq("id", user.id)
+      .single();
+    if (!res.error && res.data) profile = res.data;
+  }
+
+  if (!profile) {
+    const { data } = await supabase
+      .from("user_profiles")
+      .select("id, role_id, display_name, avatar_url, email, mobile_number, is_active, created_at, updated_at")
+      .eq("id", user.id)
+      .single();
+    profile = data;
+  }
+
+  if (!profile) return null;
+  if (profile.is_active === false) return null;
+
+  const roleClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? createServiceRoleClient() : supabase;
+  const { data: roleRow } = await roleClient
+    .from("roles")
+    .select("name")
+    .eq("id", profile.role_id)
     .single();
 
-  if (error || !profile) return null;
+  const roleName = roleRow?.name ?? "public";
+  const normalizedRole =
+    roleName === "subscriber" ? "public" : (roleName as UserRole);
+
   return {
     ...profile,
-    roleName: (profile.role as { name: string } | null)?.name ?? "public",
+    roleName: normalizedRole,
   };
 }
 

@@ -3,7 +3,11 @@
  * Inserts default categories and tags. Create an editor user in Supabase Auth first, then add articles via /editor.
  */
 
+import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+
+// Load .env.local so npm run db:seed picks up Supabase keys (Next.js only loads these for next dev/build)
+dotenv.config({ path: ".env.local" });
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
