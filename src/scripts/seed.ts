@@ -26,6 +26,36 @@ const CATEGORIES = [
   { name: "Policy", slug: "policy", description: "Policy and regulation", sort_order: 4 },
   { name: "Infrastructure", slug: "infrastructure", description: "Infrastructure and projects", sort_order: 5 },
   { name: "Markets", slug: "markets", description: "Markets and investments", sort_order: 6 },
+  {
+    name: "IT & Semiconductor",
+    slug: "it-semiconductor",
+    description: "Technology, AI, software, chip manufacturing, and digital innovation in Odisha.",
+    sort_order: 7,
+  },
+  {
+    name: "Fintech",
+    slug: "fintech",
+    description: "Financial technology startups, digital payments, banking innovation, and financial services growth.",
+    sort_order: 8,
+  },
+  {
+    name: "Metal and Mining",
+    slug: "metal-mining",
+    description: "Steel, aluminum, mining projects, mineral production, and industrial investments.",
+    sort_order: 9,
+  },
+  {
+    name: "Pharmaceutical",
+    slug: "pharmaceutical",
+    description: "Drug manufacturing, biotech, healthcare industry growth, and pharma investments.",
+    sort_order: 10,
+  },
+  {
+    name: "Automobile",
+    slug: "automobile",
+    description: "Auto manufacturing, EV sector, component industries, and mobility innovation.",
+    sort_order: 11,
+  },
 ];
 
 const TAGS = [
@@ -39,7 +69,14 @@ const TAGS = [
   "Agriculture",
   "Mining",
   "Tourism",
-].map((name) => ({ name, slug: name.toLowerCase().replace(/\s+/g, "-") }));
+  "Legacy & Leadership",
+].map((name) => ({
+  name,
+  slug: name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, ""),
+}));
 
 async function seed() {
   console.log("Seeding categories...");

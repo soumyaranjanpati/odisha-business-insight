@@ -28,8 +28,9 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
     e.preventDefault();
     setError("");
     const form = e.currentTarget;
-    const formData = new FormData(form);
-    const tagIds = form.getAll("tag_ids") as string[];
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | undefined;
+    const formData = new FormData(form, submitter ?? undefined);
+    const tagIds = formData.getAll("tag_ids") as string[];
     const action = formData.get("submit_action") as string | null;
     const status: ArticleStatus =
       action === "publish" ? "published" : action === "pending" ? "pending" : "draft";

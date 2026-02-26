@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getProfile, getUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { FixRoleButton } from "./FixRoleButton";
+import { ProfileEditForm } from "./ProfileEditForm";
 
 export const dynamic = "force-dynamic";
 
@@ -20,20 +21,22 @@ export default async function ProfilePage() {
         <CardHeader>
           <h2 className="font-semibold text-ink">Account</h2>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-gray-600">
-            <span className="font-medium text-ink">Email:</span> {user.email ?? "—"}
-          </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium text-ink">Display name:</span>{" "}
-            {profile?.display_name ?? "—"}
-          </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium text-ink">Role:</span> {role}
-          </p>
-          {role === "public" && (
-            <FixRoleButton userId={user.id} userEmail={user.email ?? undefined} />
-          )}
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-ink">Edit your name and email</h3>
+            <ProfileEditForm
+              initialDisplayName={profile?.display_name ?? null}
+              initialEmail={profile?.email ?? user.email ?? null}
+            />
+          </div>
+          <div className="border-t border-gray-200 pt-4 space-y-1">
+            <p className="text-sm text-gray-600">
+              <span className="font-medium text-ink">Role:</span> {role}
+            </p>
+            {role === "public" && (
+              <FixRoleButton userId={user.id} userEmail={user.email ?? undefined} />
+            )}
+          </div>
           {(role === "editor" || role === "admin") && (
             <p className="pt-2">
               <Link

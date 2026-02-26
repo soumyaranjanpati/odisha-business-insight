@@ -3,16 +3,8 @@ import { getFeaturedArticles, getPublishedArticles } from "@/lib/db";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { NewsletterForm } from "@/components/article/NewsletterForm";
 import { ArticleListSkeleton } from "@/components/ui/Skeleton";
+import { CATEGORY_NAV } from "@/lib/categories";
 import { Suspense } from "react";
-
-const CATEGORIES = [
-  { slug: "economy", name: "Economy" },
-  { slug: "msme", name: "MSME" },
-  { slug: "startups", name: "Startups" },
-  { slug: "policy", name: "Policy" },
-  { slug: "infrastructure", name: "Infrastructure" },
-  { slug: "markets", name: "Markets" },
-];
 
 async function FeaturedSection() {
   const featured = await getFeaturedArticles(3);
@@ -68,7 +60,7 @@ export default function HomePage() {
 
       {/* Categories strip */}
       <nav className="mb-10 flex flex-wrap gap-2">
-        {CATEGORIES.map((c) => (
+        {CATEGORY_NAV.map((c) => (
           <Link
             key={c.slug}
             href={`/category/${c.slug}`}

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { CATEGORY_NAV } from "@/lib/categories";
 import type { UserRole } from "@/types";
 
 export type NavAuth = {
@@ -12,14 +13,7 @@ export type NavAuth = {
   profile: { id: string; roleName: UserRole; display_name: string | null } | null;
 };
 
-const CATEGORY_LINKS = [
-  { href: "/category/economy", label: "Economy" },
-  { href: "/category/msme", label: "MSME" },
-  { href: "/category/startups", label: "Startups" },
-  { href: "/category/policy", label: "Policy" },
-  { href: "/category/infrastructure", label: "Infrastructure" },
-  { href: "/category/markets", label: "Markets" },
-];
+const CATEGORY_LINKS = CATEGORY_NAV.map((c) => ({ href: `/category/${c.slug}`, label: c.name }));
 
 export function Header({ auth }: { auth: NavAuth }) {
   const pathname = usePathname();
@@ -126,7 +120,7 @@ export function Header({ auth }: { auth: NavAuth }) {
               role="menu"
               aria-labelledby="categories-trigger"
               className={cn(
-                "absolute left-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-md border border-fb-footer-border bg-fb-dark shadow-lg transition-all duration-200 ease-out",
+                "absolute left-0 top-full z-20 mt-1 w-52 max-h-[70vh] overflow-y-auto overflow-x-hidden rounded-md border border-fb-footer-border bg-fb-dark shadow-lg transition-all duration-200 ease-out",
                 categoriesOpen ? "visible translate-y-0 opacity-100" : "pointer-events-none invisible -translate-y-1 opacity-0"
               )}
             >
@@ -147,7 +141,12 @@ export function Header({ auth }: { auth: NavAuth }) {
           {isEditor && (
             <Link
               href="/editor/new"
-              className="rounded bg-white px-4 py-2 text-sm font-medium text-fb shadow-sm hover:bg-gray-100"
+              className={cn(
+                "rounded px-4 py-2 text-sm font-medium transition-colors",
+                pathname === "/editor/new"
+                  ? "bg-white text-fb shadow-sm hover:bg-gray-100"
+                  : "bg-white/10 text-white hover:bg-white/20"
+              )}
             >
               Add Post
             </Link>
@@ -260,7 +259,12 @@ export function Header({ auth }: { auth: NavAuth }) {
               <li>
                 <Link
                   href="/editor/new"
-                  className="block rounded bg-white px-3 py-2 text-sm font-medium text-fb"
+                  className={cn(
+                    "block rounded px-3 py-2 text-sm font-medium",
+                    pathname === "/editor/new"
+                      ? "bg-white text-fb"
+                      : "text-white hover:bg-white/10"
+                  )}
                   onClick={() => setMobileOpen(false)}
                 >
                   Add Post

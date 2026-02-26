@@ -1,13 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ManageEditorsClient } from "./ManageEditorsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUsersPage() {
   const profile = await getProfile();
-  if (!profile) return null;
+  if (!profile) redirect("/auth/login?redirect=/admin/users");
+  if (profile.roleName !== "admin") redirect("/");
 
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   const [
     { data: profiles, error: profilesError },
     { data: roles, error: rolesError },
