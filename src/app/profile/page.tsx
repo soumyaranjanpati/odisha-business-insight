@@ -23,10 +23,13 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="mb-2 text-sm font-medium text-ink">Edit your name and email</h3>
+            <h3 className="mb-2 text-sm font-medium text-ink">
+              Edit your name, email, and mobile number
+            </h3>
             <ProfileEditForm
               initialDisplayName={profile?.display_name ?? null}
               initialEmail={profile?.email ?? user.email ?? null}
+              initialMobile={profile?.mobile_number ?? null}
             />
           </div>
           <div className="border-t border-gray-200 pt-4 space-y-1">

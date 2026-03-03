@@ -8,9 +8,11 @@ import { Toast } from "@/components/ui/Toast";
 export function ProfileEditForm({
   initialDisplayName,
   initialEmail,
+  initialMobile,
 }: {
   initialDisplayName: string | null;
   initialEmail: string | null;
+  initialMobile?: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -60,6 +62,22 @@ export function ProfileEditForm({
             placeholder="you@example.com"
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-ink shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
+        </div>
+        <div>
+          <label htmlFor="profile-mobile" className="mb-1 block text-sm font-medium text-ink">
+            Mobile number (WhatsApp)
+          </label>
+          <input
+            id="profile-mobile"
+            name="mobile_number"
+            type="tel"
+            defaultValue={initialMobile ?? ""}
+            placeholder="+91 9XXXXXXXXX"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-ink shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            We may send important updates or reports via WhatsApp.
+          </p>
         </div>
         <button
           type="submit"

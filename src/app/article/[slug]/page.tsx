@@ -22,6 +22,7 @@ import { ShareBar } from "@/components/article/ShareBar";
 import { PremiumCta } from "@/components/article/PremiumCta";
 import { RecordArticleView } from "@/components/article/RecordArticleView";
 import { hasActivePremiumSubscription } from "@/lib/subscription";
+import { SidebarAds } from "@/components/SidebarAds";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -145,7 +146,8 @@ export default async function ArticlePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <article className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
+        <article className="min-w-0 max-w-3xl">
         {category && (
           <Link
             href={`/category/${category.slug}`}
@@ -200,6 +202,12 @@ export default async function ArticlePage({ params }: PageProps) {
         {/* Social sharing */}
         <ShareBar title={article.title} slug={article.slug} />
       </article>
+
+        {/* Right sidebar: ads */}
+        <div className="mt-6 lg:mt-0">
+          <SidebarAds />
+        </div>
+      </div>
 
       {related.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

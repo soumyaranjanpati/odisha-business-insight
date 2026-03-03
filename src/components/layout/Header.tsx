@@ -19,7 +19,9 @@ export function Header({ auth }: { auth: NavAuth }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const categoriesRef = useRef<HTMLDivElement>(null);
+  const toolsRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const { user, profile } = auth;
   const role: UserRole | null = profile?.roleName ?? null;
@@ -49,6 +51,16 @@ export function Header({ auth }: { auth: NavAuth }) {
   };
   const handleCategoriesClick = () => {
     if (window.innerWidth < 768) setCategoriesOpen((o) => !o);
+  };
+
+  const handleToolsEnter = () => {
+    if (window.innerWidth >= 768) setToolsOpen(true);
+  };
+  const handleToolsLeave = () => {
+    if (window.innerWidth >= 768) setToolsOpen(false);
+  };
+  const handleToolsClick = () => {
+    if (window.innerWidth < 768) setToolsOpen((o) => !o);
   };
 
   // Keyboard: Escape to close, Enter/Space to toggle
@@ -90,6 +102,10 @@ export function Header({ auth }: { auth: NavAuth }) {
             priority
           />
         </Link>
+
+        <div className="ml-3 text-white">
+          <span className="text-sm font-semibold sm:text-base md:text-lg">Odisha Business Insight</span>
+        </div>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex">
@@ -137,19 +153,77 @@ export function Header({ auth }: { auth: NavAuth }) {
               ))}
             </div>
           </div>
-          {isEditor && link("/editor", "My Posts")}
-          {isEditor && (
-            <Link
-              href="/editor/new"
-              className={cn(
-                "rounded px-4 py-2 text-sm font-medium transition-colors",
-                pathname === "/editor/new"
-                  ? "bg-white text-fb shadow-sm hover:bg-gray-100"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              )}
+
+          {(isEditor || isAdmin) && (
+            <div
+              ref={toolsRef}
+              className="relative"
+              onMouseEnter={handleToolsEnter}
+              onMouseLeave={handleToolsLeave}
             >
-              Add Post
-            </Link>
+              <button
+                type="button"
+                onClick={handleToolsClick}
+                aria-expanded={toolsOpen}
+                aria-haspopup="true"
+                className={cn(
+                  "rounded px-3 py-2 text-sm font-medium text-white transition-colors duration-200",
+                  toolsOpen ? "bg-white/20" : "hover:bg-white/10"
+                )}
+              >
+                Editorial Desk
+              </button>
+              <div
+                className={cn(
+                  "absolute right-0 top-full z-20 mt-1 w-56 rounded-md border border-fb-footer-border bg-fb-dark shadow-lg",
+                  toolsOpen ? "visible opacity-100" : "pointer-events-none invisible opacity-0"
+                )}
+              >
+                <div className="py-1 text-sm text-white">
+                  {isEditor && (
+                    <>
+                      <Link
+                        href="/editor"
+                        className="block px-4 py-2 hover:bg-white/10"
+                        onClick={() => setToolsOpen(false)}
+                      >
+                        My Posts
+                      </Link>
+                      <Link
+                        href="/editor/new"
+                        className="block px-4 py-2 hover:bg-white/10"
+                        onClick={() => setToolsOpen(false)}
+                      >
+                        Add Post
+                      </Link>
+                      <Link
+                        href="/editor/advertisements/new"
+                        className="block px-4 py-2 hover:bg-white/10"
+                        onClick={() => setToolsOpen(false)}
+                      >
+                        Add Advertisement
+                      </Link>
+                      <Link
+                        href="/editor/advertisements"
+                        className="block px-4 py-2 hover:bg-white/10"
+                        onClick={() => setToolsOpen(false)}
+                      >
+                        Manage Advertisements
+                      </Link>
+                    </>
+                  )}
+                  {isAdmin && (
+                    <Link
+                      href="/admin/contact"
+                      className="block px-4 py-2 hover:bg-white/10"
+                      onClick={() => setToolsOpen(false)}
+                    >
+                      Contact Form
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
           {isAdmin && link("/admin/users", "Users")}
           {isAdmin && link("/admin", "Admin Panel")}
@@ -254,21 +328,35 @@ export function Header({ auth }: { auth: NavAuth }) {
                 ))}
               </ul>
             </li>
-            {isEditor && <li>{link("/editor", "My Posts")}</li>}
-            {isEditor && (
+            {(isEditor || isAdmin) && (
               <li>
-                <Link
-                  href="/editor/new"
-                  className={cn(
-                    "block rounded px-3 py-2 text-sm font-medium",
-                    pathname === "/editor/new"
-                      ? "bg-white text-fb"
-                      : "text-white hover:bg-white/10"
+                <span className="block px-3 py-2 text-sm font-medium text-white/80">
+                  Editorial Desk
+                </span>
+                <ul className="pl-4">
+                  {isEditor && (
+                    <>
+                      <li>{link("/editor", "My Posts")}</li>
+                      <li>
+                        <Link
+                          href="/editor/new"
+                          className={cn(
+                            "block rounded px-3 py-2 text-sm font-medium",
+                            pathname === "/editor/new"
+                              ? "bg-white text-fb"
+                              : "text-white hover:bg-white/10"
+                          )}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          Add Post
+                        </Link>
+                      </li>
+                      <li>{link("/editor/advertisements/new", "Add Advertisement")}</li>
+                      <li>{link("/editor/advertisements", "Manage Advertisements")}</li>
+                    </>
                   )}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Add Post
-                </Link>
+                  {isAdmin && <li>{link("/admin/contact", "Contact Form")}</li>}
+                </ul>
               </li>
             )}
             {isAdmin && <li>{link("/admin/users", "Users")}</li>}

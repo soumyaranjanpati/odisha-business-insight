@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { getAdminAnalytics } from "@/lib/admin-analytics";
 
@@ -7,6 +7,7 @@ const ANALYTICS_DAYS = 30;
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
+  const adminClient = createServiceRoleClient();
 
   const [
     { count: articlesCount },
@@ -31,7 +32,7 @@ export default async function AdminDashboardPage() {
       .from("newsletter_subscribers")
       .select("id", { count: "exact", head: true })
       .eq("is_active", true),
-    supabase.from("contact_messages").select("id", { count: "exact", head: true }),
+    adminClient.from("contact_messages").select("id", { count: "exact", head: true }),
     getAdminAnalytics(ANALYTICS_DAYS),
   ]);
 
@@ -41,7 +42,7 @@ export default async function AdminDashboardPage() {
     { label: "Pending review", value: pendingCount ?? 0, href: "/admin/articles?status=pending" },
     { label: "Users", value: usersCount ?? 0, href: "/admin/users" },
     { label: "Newsletter subscribers", value: subscribersCount ?? 0 },
-    { label: "Contact messages", value: messagesCount ?? 0 },
+    { label: "Contact messages", value: messagesCount ?? 0, href: "/admin/contact" },
   ];
 
   const maxDayViews = analytics?.by_day?.length

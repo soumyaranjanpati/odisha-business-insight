@@ -9,6 +9,12 @@ export async function updateProfile(formData: FormData): Promise<{ ok: boolean; 
 
   const displayName = (formData.get("display_name") as string)?.trim() ?? "";
   const email = (formData.get("email") as string)?.trim() ?? "";
+  const mobile = (formData.get("mobile_number") as string | null)?.trim() ?? "";
+
+  const normalizedMobile =
+    mobile && mobile.length > 0
+      ? mobile.replace(/[^\d+]/g, "").slice(0, 20)
+      : "";
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -16,6 +22,7 @@ export async function updateProfile(formData: FormData): Promise<{ ok: boolean; 
     .update({
       display_name: displayName || null,
       email: email || null,
+      mobile_number: normalizedMobile || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);

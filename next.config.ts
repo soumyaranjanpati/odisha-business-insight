@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverActions: {
+    bodySizeLimit: "6mb",
+  },
   images: {
     remotePatterns: [
       {
@@ -11,6 +14,9 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
     // Optimize package imports for smaller bundles
     optimizePackageImports: ["@supabase/supabase-js"],
   },

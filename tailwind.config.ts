@@ -33,13 +33,13 @@ const config: Config = {
           800: "#075985",
           900: "#0c4a6e",
         },
-        /* Facebook-style blues for header/footer */
+        /* Brand blues for header/footer */
         fb: {
-          DEFAULT: "#1877F2",
-          hover: "#166FE5",
-          dark: "#145dbf",
-          footer: "#242526",
-          "footer-border": "#3e4042",
+          DEFAULT: "#0f4c81", // main header blue
+          hover: "#0d4270",
+          dark: "#093053",
+          footer: "#111827",
+          "footer-border": "#1f2937",
         },
         ink: {
           DEFAULT: "#1a1a1a",

@@ -4,6 +4,7 @@ import { ArticleCard } from "@/components/article/ArticleCard";
 import { NewsletterForm } from "@/components/article/NewsletterForm";
 import { ArticleListSkeleton } from "@/components/ui/Skeleton";
 import { CATEGORY_NAV } from "@/lib/categories";
+import { SidebarAds } from "@/components/SidebarAds";
 import { Suspense } from "react";
 
 async function FeaturedSection() {
@@ -48,49 +49,47 @@ async function LatestSection() {
 
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-10">
-        <h1 className="headline text-3xl font-bold text-ink sm:text-4xl">
-          Odisha Business Insight
-        </h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Trusted business news, economy and policy updates from Odisha.
-        </p>
-      </div>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
+      <div className="min-w-0">
+        {/* Categories strip */}
+        <nav className="mb-10 flex flex-wrap gap-2">
+          {CATEGORY_NAV.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/category/${c.slug}`}
+              className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-primary-500 hover:text-primary-600"
+            >
+              {c.name}
+            </Link>
+          ))}
+        </nav>
 
-      {/* Categories strip */}
-      <nav className="mb-10 flex flex-wrap gap-2">
-        {CATEGORY_NAV.map((c) => (
-          <Link
-            key={c.slug}
-            href={`/category/${c.slug}`}
-            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-primary-500 hover:text-primary-600"
-          >
-            {c.name}
-          </Link>
-        ))}
-      </nav>
-
-      <Suspense fallback={<ArticleListSkeleton count={5} />}>
-        <FeaturedSection />
-      </Suspense>
-
-      <div className="mt-12">
-        <Suspense fallback={<ArticleListSkeleton count={6} />}>
-          <LatestSection />
+        <Suspense fallback={<ArticleListSkeleton count={5} />}>
+          <FeaturedSection />
         </Suspense>
+
+        <div className="mt-12">
+          <Suspense fallback={<ArticleListSkeleton count={6} />}>
+            <LatestSection />
+          </Suspense>
+        </div>
+
+        {/* Newsletter */}
+        <section className="mt-16 rounded-xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
+          <h2 className="headline text-xl font-semibold text-ink">Stay informed</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Subscribe to our newsletter for weekly business insights from Odisha.
+          </p>
+          <div className="mt-4">
+            <NewsletterForm />
+          </div>
+        </section>
       </div>
 
-      {/* Newsletter */}
-      <section className="mt-16 rounded-xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
-        <h2 className="headline text-xl font-semibold text-ink">Stay informed</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Subscribe to our newsletter for weekly business insights from Odisha.
-        </p>
-        <div className="mt-4">
-          <NewsletterForm />
-        </div>
-      </section>
+      {/* Right sidebar: ads */}
+      <aside className="mt-6 lg:mt-0">
+        <SidebarAds />
+      </aside>
     </div>
   );
 }
