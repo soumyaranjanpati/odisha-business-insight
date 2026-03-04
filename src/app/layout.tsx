@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    maxImagePreview: "large",
+    "max-image-preview": "large",
   },
 };
 
