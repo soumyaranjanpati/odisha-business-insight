@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Suspense } from "react";
 import "./globals.css";
 import { HeaderWithAuth } from "@/components/layout/HeaderWithAuth";
@@ -29,6 +30,11 @@ export const metadata: Metadata = {
     locale: "en_IN",
     siteName: SITE_NAME,
   },
+  robots: {
+    index: true,
+    follow: true,
+    maxImagePreview: "large",
+  },
 };
 
 const websiteJsonLd = {
@@ -44,6 +50,8 @@ const websiteJsonLd = {
   },
 };
 
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -53,6 +61,22 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-white text-ink antialiased">
         <Preconnect />
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}

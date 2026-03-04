@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getPublishedArticles, getCategories } from "@/lib/db";
+import { canonicalUrl, SITE_NAME } from "@/lib/seo";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ArticleListSkeleton } from "@/components/ui/Skeleton";
 import { Suspense } from "react";
@@ -12,14 +14,33 @@ interface PageProps {
 // Category pages are dynamic (getCategories uses request-scoped Supabase).
 // Omit generateStaticParams to avoid cookies() outside request scope.
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const categories = await getCategories();
   const category = categories.find((c) => c.slug === slug);
   if (!category) return { title: "Category" };
+  const title = `${category.name} | ${SITE_NAME}`;
+  const description =
+    category.description ??
+    `Latest ${category.name} business news, economy and policy updates from Odisha.`;
+  const url = canonicalUrl(`/category/${slug}`);
+
   return {
-    title: `${category.name} | Odisha Business Insight`,
-    description: category.description ?? `Latest ${category.name} news and updates from Odisha.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      siteName: SITE_NAME,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
   };
 }
 

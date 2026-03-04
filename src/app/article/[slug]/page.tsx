@@ -2,10 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import {
-  getPublishedArticleBySlug,
-  getRelatedArticles,
-} from "@/lib/db";
+import { getPublishedArticleBySlug, getRelatedArticles } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
 import {
   canonicalUrl,
@@ -22,7 +19,8 @@ import { ShareBar } from "@/components/article/ShareBar";
 import { PremiumCta } from "@/components/article/PremiumCta";
 import { RecordArticleView } from "@/components/article/RecordArticleView";
 import { hasActivePremiumSubscription } from "@/lib/subscription";
-import { SidebarAds } from "@/components/SidebarAds";
+import { ArticleBreadcrumbs } from "@/components/article/Breadcrumbs";
+import { SidebarRight } from "@/components/SidebarRight";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -87,7 +85,7 @@ export default async function ArticlePage({ params }: PageProps) {
   const article = await getPublishedArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = await getRelatedArticles(article.id, article.category_id, 4);
+  const related = await getRelatedArticles(article.id, article.category_id, 3);
   const category = article.category;
   const isPremium = article.is_premium ?? false;
   const hasPremiumAccess = await hasActivePremiumSubscription();
@@ -95,6 +93,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
   const articleUrl = canonicalUrl(`/article/${article.slug}`);
   const baseUrl = getBaseUrl();
+  const authorName = SITE_NAME;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -118,7 +117,7 @@ export default async function ArticlePage({ params }: PageProps) {
     dateModified: article.updated_at,
     author: {
       "@type": "Organization",
-      name: SITE_NAME,
+      name: authorName,
       url: baseUrl,
     },
     publisher: {
@@ -148,26 +147,40 @@ export default async function ArticlePage({ params }: PageProps) {
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
         <article className="min-w-0 max-w-3xl">
-        {category && (
-          <Link
-            href={`/category/${category.slug}`}
-            className="text-sm font-medium text-primary-600 hover:underline"
-          >
-            {category.name}
-          </Link>
-        )}
-        <h1 className="headline mt-2 text-3xl font-bold text-ink sm:text-4xl">
-          {article.title}
-        </h1>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
-          <time dateTime={article.published_at ?? article.created_at}>
-            {formatDate(article.published_at ?? article.created_at)}
-          </time>
-          {article.reading_time_minutes && (
-            <span>{article.reading_time_minutes} min read</span>
-          )}
-          <ArticleBadges article={article} />
-        </div>
+          <ArticleBreadcrumbs
+            categorySlug={category?.slug}
+            categoryName={category?.name}
+            articleTitle={article.title}
+            articleSlug={article.slug}
+          />
+          <h1 className="headline mt-1 text-3xl font-bold text-ink sm:mt-2 sm:text-4xl">
+            {article.title}
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+            <span>By {authorName}</span>
+            <span>•</span>
+            <time dateTime={article.published_at ?? article.created_at}>
+              {formatDate(article.published_at ?? article.created_at)}
+            </time>
+            {category && (
+              <>
+                <span>•</span>
+                <Link
+                  href={`/category/${category.slug}`}
+                  className="hover:underline"
+                >
+                  {category.name}
+                </Link>
+              </>
+            )}
+            {article.reading_time_minutes && (
+              <>
+                <span>•</span>
+                <span>{article.reading_time_minutes} min read</span>
+              </>
+            )}
+            <ArticleBadges article={article} />
+          </div>
 
         {article.featured_image_url && (
           <div className="relative mt-6 aspect-video overflow-hidden rounded-xl bg-gray-100">
@@ -199,13 +212,13 @@ export default async function ArticlePage({ params }: PageProps) {
           />
         )}
 
-        {/* Social sharing */}
-        <ShareBar title={article.title} slug={article.slug} />
-      </article>
+          {/* Social sharing */}
+          <ShareBar title={article.title} slug={article.slug} />
+        </article>
 
-        {/* Right sidebar: ads */}
+        {/* Right sidebar: ads + trending + newsletter */}
         <div className="mt-6 lg:mt-0">
-          <SidebarAds />
+          <SidebarRight />
         </div>
       </div>
 

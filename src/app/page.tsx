@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { getFeaturedArticles, getPublishedArticles } from "@/lib/db";
 import { ArticleCard } from "@/components/article/ArticleCard";
-import { NewsletterForm } from "@/components/article/NewsletterForm";
 import { ArticleListSkeleton } from "@/components/ui/Skeleton";
 import { CATEGORY_NAV } from "@/lib/categories";
-import { SidebarAds } from "@/components/SidebarAds";
+import { SidebarRight } from "@/components/SidebarRight";
 import { Suspense } from "react";
 
 async function FeaturedSection() {
@@ -73,22 +72,11 @@ export default function HomePage() {
             <LatestSection />
           </Suspense>
         </div>
-
-        {/* Newsletter */}
-        <section className="mt-16 rounded-xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
-          <h2 className="headline text-xl font-semibold text-ink">Stay informed</h2>
-          <p className="mt-1 text-sm text-gray-600">
-            Subscribe to our newsletter for weekly business insights from Odisha.
-          </p>
-          <div className="mt-4">
-            <NewsletterForm />
-          </div>
-        </section>
       </div>
 
-      {/* Right sidebar: ads */}
+      {/* Right sidebar: ads + trending + newsletter */}
       <aside className="mt-6 lg:mt-0">
-        <SidebarAds />
+        <SidebarRight />
       </aside>
     </div>
   );

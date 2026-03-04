@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import type { ArticleWithRelations } from "@/types";
 
 /**
@@ -79,7 +79,10 @@ function normalizeArticles(rows: Record<string, unknown>[]): ArticleWithRelation
  * Fetch a single published article by slug.
  */
 export async function getPublishedArticleBySlug(slug: string) {
-  const supabase = await createClient();
+  // Prefer service role to avoid RLS edge cases for public article view.
+  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceRoleClient()
+    : await createClient();
   const { data, error } = await supabase
     .from("articles")
     .select(
@@ -91,8 +94,8 @@ export async function getPublishedArticleBySlug(slug: string) {
     )
     .eq("slug", slug)
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .single();
+    console.log("getPublishedArticleBySlug DEBUG", { slug, error, hasData: !!data });
 
   if (error || !data) return null;
   const [normalized] = normalizeArticles([data as Record<string, unknown>]);
