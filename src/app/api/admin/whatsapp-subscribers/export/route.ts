@@ -4,6 +4,13 @@ import { getProfile } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+type WhatsappExportRow = {
+  whatsapp_number: string;
+  email: string | null;
+  is_active: boolean;
+  subscribed_at: string;
+};
+
 function escapeCSV(value: string | null | undefined): string {
   if (value == null) return "";
   const str = String(value);
@@ -35,7 +42,7 @@ export async function GET() {
     return new NextResponse("Failed to fetch subscribers", { status: 500 });
   }
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as WhatsappExportRow[];
 
   const csvRows: string[] = [
     // Header
