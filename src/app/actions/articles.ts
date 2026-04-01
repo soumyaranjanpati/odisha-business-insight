@@ -12,7 +12,7 @@ interface CreateOrUpdateInput {
   slug: string;
   excerpt: string | null;
   body: string;
-  category_id: string;
+  category_ids: string[];
   tag_ids: string[];
   status: ArticleStatus;
   featured_image_url: string | null;
@@ -37,6 +37,12 @@ export async function createOrUpdateArticle(
 
   const slug = (input.slug || slugify(input.title, { lower: true, strict: true })).trim();
   if (!slug) return { success: false, message: "Slug is required" };
+
+  const categoryIds = Array.from(new Set(input.category_ids.filter(Boolean)));
+  if (!categoryIds.length) {
+    return { success: false, message: "Please select at least one category" };
+  }
+  const primaryCategoryId = categoryIds[0];
 
   const reading_time_minutes = readingTimeMinutes(input.body);
   const published_at =
@@ -64,7 +70,7 @@ export async function createOrUpdateArticle(
         slug,
         excerpt: input.excerpt || null,
         body: input.body,
-        category_id: input.category_id,
+        category_id: primaryCategoryId,
         status: input.status,
         published_at,
         reading_time_minutes,
@@ -90,6 +96,13 @@ export async function createOrUpdateArticle(
         input.tag_ids.map((tag_id) => ({ article_id: input.id!, tag_id }))
       );
     }
+
+    // Sync multi-categories
+    await supabase.from("article_categories").delete().eq("article_id", input.id);
+    await supabase
+      .from("article_categories")
+      .insert(categoryIds.map((category_id) => ({ article_id: input.id!, category_id })));
+
     return { success: true, slug };
   }
 
@@ -102,7 +115,7 @@ export async function createOrUpdateArticle(
       slug,
       excerpt: input.excerpt || null,
       body: input.body,
-      category_id: input.category_id,
+      category_id: primaryCategoryId,
       status: input.status,
       published_at,
       reading_time_minutes,
@@ -127,6 +140,12 @@ export async function createOrUpdateArticle(
     await supabase.from("article_tags").insert(
       input.tag_ids.map((tag_id) => ({ article_id: newArticle.id, tag_id }))
     );
+  }
+
+  if (newArticle) {
+    await supabase
+      .from("article_categories")
+      .insert(categoryIds.map((category_id) => ({ article_id: newArticle.id, category_id })));
   }
 
   return { success: true, slug };

@@ -14,15 +14,27 @@ type ArticleStatus = Article["status"];
 interface ArticleFormProps {
   categories: Category[];
   tags: Tag[];
-  article?: Article & { tag_ids?: string[] };
+  article?: Article & { tag_ids?: string[]; category_ids?: string[] };
 }
 
 export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [title, setTitle] = useState(article?.title ?? "");
+  const [slug, setSlug] = useState(article?.slug ?? "");
+  const [slugEdited, setSlugEdited] = useState(!!article?.slug);
 
   const isEdit = !!article;
+
+  function makeSlug(value: string) {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,6 +42,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
     const form = e.currentTarget;
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | undefined;
     const formData = new FormData(form, submitter ?? undefined);
+    const categoryIds = formData.getAll("category_ids") as string[];
     const tagIds = formData.getAll("tag_ids") as string[];
     const action = formData.get("submit_action") as string | null;
     const status: ArticleStatus =
@@ -42,7 +55,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
         slug: formData.get("slug") as string,
         excerpt: (formData.get("excerpt") as string) || null,
         body: formData.get("body") as string,
-        category_id: formData.get("category_id") as string,
+        category_ids: categoryIds,
         tag_ids: tagIds,
         status,
         featured_image_url: (formData.get("featured_image_url") as string) || null,
@@ -71,14 +84,25 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
             label="Title"
             name="title"
             required
-            defaultValue={article?.title}
+            value={title}
+            onChange={(e) => {
+              const nextTitle = e.target.value;
+              setTitle(nextTitle);
+              if (!isEdit && !slugEdited) {
+                setSlug(makeSlug(nextTitle));
+              }
+            }}
             placeholder="Article title"
           />
           <Input
             label="Slug (URL)"
             name="slug"
             required
-            defaultValue={article?.slug}
+            value={slug}
+            onChange={(e) => {
+              setSlugEdited(true);
+              setSlug(makeSlug(e.target.value));
+            }}
             placeholder="article-url-slug"
           />
           <div>
@@ -120,20 +144,26 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
-            <select
-              name="category_id"
-              required
-              defaultValue={article?.category_id ?? ""}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-            >
-              <option value="">Select category</option>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Categories</label>
+            <div className="flex flex-wrap gap-2">
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
+                <label key={c.id} className="inline-flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    name="category_ids"
+                    value={c.id}
+                    defaultChecked={
+                      article?.category_ids?.includes(c.id) || article?.category_id === c.id
+                    }
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm">{c.name}</span>
+                </label>
               ))}
-            </select>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Select one or more categories. The first selected category is used as primary.
+            </p>
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">Tags</label>

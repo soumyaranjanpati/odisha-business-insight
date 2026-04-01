@@ -28,7 +28,7 @@ export default async function AdminDashboardPage() {
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
     supabase.from("user_profiles").select("id", { count: "exact", head: true }),
-    supabase
+    adminClient
       .from("newsletter_subscribers")
       .select("id", { count: "exact", head: true })
       .eq("is_active", true),
@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
     { label: "Published", value: publishedCount ?? 0, href: "/admin/articles?status=published" },
     { label: "Pending review", value: pendingCount ?? 0, href: "/admin/articles?status=pending" },
     { label: "Users", value: usersCount ?? 0, href: "/admin/users" },
-    { label: "Newsletter subscribers", value: subscribersCount ?? 0 },
+    { label: "Newsletter subscribers", value: subscribersCount ?? 0, href: "/admin/subscribers" },
     { label: "Contact messages", value: messagesCount ?? 0, href: "/admin/contact" },
   ];
 
@@ -101,18 +101,17 @@ export default async function AdminDashboardPage() {
                 {analytics.top_articles?.length ? (
                   <ul className="divide-y divide-gray-200">
                     {analytics.top_articles.map((a) => (
-                      <li key={a.article_id} className="flex items-center justify-between px-4 py-3">
-                        <span className="min-w-0 flex-1">
-                          <Link
-                            href={`/article/${a.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="truncate font-medium text-primary-600 hover:underline"
-                          >
-                            {a.title}
-                          </Link>
-                        </span>
-                        <span className="ml-3 shrink-0 text-sm font-medium text-gray-600">
+                      <li key={a.article_id} className="flex items-center justify-between gap-3 px-4 py-3">
+                        <Link
+                          href={`/article/${a.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block min-w-0 flex-1 truncate font-medium text-primary-600 hover:underline"
+                          title={a.title}
+                        >
+                          {a.title}
+                        </Link>
+                        <span className="shrink-0 text-sm font-medium text-gray-600">
                           {a.views.toLocaleString()} views
                         </span>
                       </li>

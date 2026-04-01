@@ -23,7 +23,7 @@ export async function getArticleBySlugForEditor(
   slug: string,
   userId: string,
   isAdmin: boolean
-): Promise<(Article & { tag_ids: string[] }) | null> {
+): Promise<(Article & { tag_ids: string[]; category_ids: string[] }) | null> {
   const supabase = await createClient();
   let query = supabase.from("articles").select("*").eq("slug", slug);
   if (!isAdmin) {
@@ -38,6 +38,15 @@ export async function getArticleBySlugForEditor(
     .select("tag_id")
     .eq("article_id", article.id);
   const tag_ids = (at ?? []).map((r) => r.tag_id);
+  const { data: ac } = await supabase
+    .from("article_categories")
+    .select("category_id")
+    .eq("article_id", article.id);
+  const category_ids = (ac ?? []).map((r) => r.category_id);
 
-  return { ...article, tag_ids } as Article & { tag_ids: string[] };
+  return {
+    ...article,
+    tag_ids,
+    category_ids: category_ids.length ? category_ids : [article.category_id],
+  } as Article & { tag_ids: string[]; category_ids: string[] };
 }

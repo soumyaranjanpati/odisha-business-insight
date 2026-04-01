@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const article = await getPublishedArticleBySlug(slug);
   if (!article) return { title: "Article" };
 
-  const title = article.meta_title ?? article.title;
-  const rawDesc = article.meta_description ?? article.excerpt ?? "";
+  const title = article.meta_title?.trim() || article.title;
+  const rawDesc = article.meta_description?.trim() || article.excerpt?.trim() || "";
   const description = truncateMetaDescription(rawDesc);
   const image = article.featured_image_url ?? undefined;
   const canonical = canonicalUrl(`/article/${slug}`);
@@ -100,7 +100,7 @@ export default async function ArticlePage({ params }: PageProps) {
     "@type": "NewsArticle",
     headline: article.title,
     description: truncateMetaDescription(
-      article.meta_description ?? article.excerpt ?? article.title
+      article.meta_description?.trim() || article.excerpt?.trim() || article.title
     ),
     url: articleUrl,
     mainEntityOfPage: {
