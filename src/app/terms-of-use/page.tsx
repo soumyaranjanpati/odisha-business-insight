@@ -39,9 +39,7 @@ export default function TermsOfUsePage() {
       <section className="mt-10">
         <h2 className="headline text-xl font-semibold text-ink">Accuracy of Information</h2>
         <p className="mt-2 text-gray-600">
-          While we strive for accuracy, content on this site is provided "as is" without warranty
-          of any kind. We recommend readers verify information independently before making
-          business or financial decisions.
+          {`While we strive for accuracy, content on this site is provided "as is" without warranty of any kind. We recommend readers verify information independently before making business or financial decisions.`}
         </p>
       </section>
 
