@@ -12,7 +12,7 @@ export default function SubscribePage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="headline text-3xl font-bold text-ink">
-        Stay Updated with Odisha Business Insights
+        Stay Updated with {SITE_NAME}
       </h1>
       <p className="mt-3 text-base text-gray-600">
         Subscribe to receive business news and policy updates from Odisha. Choose how you want
@@ -36,7 +36,7 @@ export default function SubscribePage() {
             <h2 className="font-semibold text-blue-800">Email Newsletter</h2>
           </div>
           <p className="mt-1 text-sm text-blue-700">
-            Receive our monthly Odisha Business Insight PDF report with in-depth analysis
+            Receive our monthly {SITE_NAME} PDF report with in-depth analysis
             and key economic updates.
           </p>
         </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Terms of Use",
   description:
-    "Terms of Use for Odisha Business Insight – copyright, content usage and limitation of liability.",
+    "Terms of Use for Odisha Economy – copyright, content usage and limitation of liability.",
 };
 
 export default function TermsOfUsePage() {
@@ -13,7 +13,7 @@ export default function TermsOfUsePage() {
       <h1 className="headline text-3xl font-bold text-ink">Terms of Use</h1>
       <p className="mt-4 text-gray-500 text-sm">Last updated: {new Date().getFullYear()}</p>
       <p className="mt-4 text-lg text-gray-600">
-        All content published on Odisha Business Insight is for informational purposes only. By
+        All content published on Odisha Economy is for informational purposes only. By
         accessing or using this site, you agree to the following terms.
       </p>
 
@@ -21,7 +21,7 @@ export default function TermsOfUsePage() {
         <h2 className="headline text-xl font-semibold text-ink">Copyright</h2>
         <p className="mt-2 text-gray-600">
           All articles, graphics, logos and materials published on this site are the intellectual
-          property of Odisha Business Insight unless otherwise stated. Unauthorised reproduction,
+          property of Odisha Economy unless otherwise stated. Unauthorised reproduction,
           redistribution or commercial use of any content without prior written permission is
           prohibited.
         </p>
@@ -46,7 +46,7 @@ export default function TermsOfUsePage() {
       <section className="mt-10">
         <h2 className="headline text-xl font-semibold text-ink">Limitation of Liability</h2>
         <p className="mt-2 text-gray-600">
-          Odisha Business Insight is not responsible for any direct or indirect losses resulting
+          Odisha Economy is not responsible for any direct or indirect losses resulting
           from reliance on published information. We are not liable for errors, omissions or
           interruptions in content or service availability.
         </p>

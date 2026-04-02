@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE_NAME } from "@/lib/seo";
 import { SidebarAds } from "@/components/SidebarAds";
 import { getPublishedArticles } from "@/lib/db";
 import { NewsletterForm } from "@/components/article/NewsletterForm";
@@ -33,7 +34,7 @@ export async function SidebarRight() {
 
       <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
         <h3 className="text-sm font-semibold text-ink">
-          Get Odisha Business Insights
+          {`Get ${SITE_NAME} updates`}
         </h3>
         <p className="mt-1 text-xs text-gray-600">
           Subscribe to our monthly report and key business updates.

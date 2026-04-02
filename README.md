@@ -1,4 +1,4 @@
-# Odisha Business Insight
+# Odisha Economy
 
 Production-ready business news platform for Odisha. Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, and **Supabase** (PostgreSQL, Auth, Storage).
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Privacy Policy for Odisha Business Insight – how we collect, use and protect your personal information.",
+    "Privacy Policy for Odisha Economy – how we collect, use and protect your personal information.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
       <h1 className="headline text-3xl font-bold text-ink">Privacy Policy</h1>
       <p className="mt-4 text-gray-500 text-sm">Last updated: {new Date().getFullYear()}</p>
       <p className="mt-4 text-lg text-gray-600">
-        Odisha Business Insight is committed to protecting your privacy. This policy explains what
+        Odisha Economy is committed to protecting your privacy. This policy explains what
         information we collect, how we use it and how we protect it.
       </p>
 

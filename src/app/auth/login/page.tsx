@@ -4,7 +4,7 @@ import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
   title: "Login",
-  description: "Sign in to Odisha Business Insight.",
+  description: "Sign in to Odisha Economy.",
 };
 
 interface PageProps {

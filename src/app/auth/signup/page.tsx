@@ -4,7 +4,7 @@ import { SignupForm } from "./SignupForm";
 
 export const metadata: Metadata = {
   title: "Sign up",
-  description: "Create an account on Odisha Business Insight.",
+  description: "Create an account on Odisha Economy.",
 };
 
 export default function SignupPage() {

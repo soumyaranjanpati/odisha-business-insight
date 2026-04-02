@@ -1,5 +1,5 @@
 /**
- * Shared types for Odisha Business Insight
+ * Shared types for Odisha Economy
  */
 
 export type ArticleStatus = "draft" | "pending" | "published" | "rejected" | "archived";

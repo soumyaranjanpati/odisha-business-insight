@@ -19,8 +19,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
+  applicationName: SITE_NAME,
   title: {
-    default: `${SITE_NAME} | Business News & Economy`,
+    default: `${SITE_NAME} | Business, Policy & Growth News`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -29,6 +30,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
   },
   robots: {
     index: true,

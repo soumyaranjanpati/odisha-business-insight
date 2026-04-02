@@ -3,7 +3,7 @@ import { ContactForm } from "./ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact Us",
-  description: "Get in touch with Odisha Business Insight – feedback, enquiries and partnerships.",
+  description: "Get in touch with Odisha Economy – feedback, enquiries and partnerships.",
 };
 
 export default function ContactPage() {

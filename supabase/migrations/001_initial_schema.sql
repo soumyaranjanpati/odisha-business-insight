@@ -1,5 +1,5 @@
 -- ============================================================
--- Odisha Business Insight - Initial Database Schema
+-- Odisha Economy - Initial Database Schema
 -- Supabase (PostgreSQL)
 -- ============================================================
 

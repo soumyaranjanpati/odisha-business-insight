@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { CATEGORY_NAV } from "@/lib/categories";
+import { SITE_NAME, SITE_TAGLINE } from "@/lib/seo";
 import type { UserRole } from "@/types";
 
 export type NavAuth = {
@@ -91,11 +92,11 @@ export function Header({ auth }: { auth: NavAuth }) {
         <Link
           href="/"
           className="flex shrink-0 items-center transition-opacity hover:opacity-90"
-          aria-label="Odisha Business Insight - Home"
+          aria-label={`${SITE_NAME} - Home`}
         >
           <Image
             src="/logo.png"
-            alt="Odisha Business Insight"
+            alt={SITE_NAME}
             width={220}
             height={56}
             className="h-10 w-auto sm:h-12"
@@ -103,8 +104,11 @@ export function Header({ auth }: { auth: NavAuth }) {
           />
         </Link>
 
-        <div className="ml-3 text-white">
-          <span className="text-sm font-semibold sm:text-base md:text-lg">Odisha Business Insight</span>
+        <div className="ml-3 min-w-0 text-white">
+          <span className="block text-sm font-semibold sm:text-base md:text-lg">{SITE_NAME}</span>
+          <span className="line-clamp-2 max-w-[10rem] text-[10px] font-normal leading-tight text-white/90 sm:line-clamp-1 sm:max-w-[16rem] md:max-w-none sm:text-xs md:text-sm">
+            {SITE_TAGLINE}
+          </span>
         </div>
 
         {/* Desktop nav */}

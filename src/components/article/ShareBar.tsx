@@ -1,10 +1,9 @@
 "use client";
 
+import { getBaseUrl } from "@/lib/seo";
+
 export function ShareBar({ title, slug }: { title: string; slug: string }) {
-  const baseUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_SITE_URL ?? "https://odisha-business-insight.vercel.app";
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : getBaseUrl();
   const url = `${baseUrl}/article/${slug}`;
 
   const links = [

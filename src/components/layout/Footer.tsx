@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { getProfile } from "@/lib/auth";
+import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
+import { APP_VERSION } from "@/lib/version";
 
 const CATEGORIES = [
   { slug: "economy", name: "Economy" },
@@ -9,18 +12,18 @@ const CATEGORIES = [
   { slug: "markets", name: "Markets" },
 ];
 
-export function Footer() {
+export async function Footer() {
   const year = new Date().getFullYear();
+  const profile = await getProfile();
+  const isAdmin = profile?.roleName === "admin";
 
   return (
     <footer className="mt-auto border-t border-fb-footer-border bg-fb-footer">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <h3 className="headline text-lg font-semibold text-white">Odisha Business Insight</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              Your trusted source for business news, economy and policy updates from Odisha.
-            </p>
+            <h3 className="headline text-lg font-semibold text-white">{SITE_NAME}</h3>
+            <p className="mt-2 text-sm text-gray-400">{SITE_DESCRIPTION}</p>
           </div>
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
@@ -95,7 +98,12 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t border-fb-footer-border pt-8 text-center text-sm text-gray-500">
-          &copy; {year} Odisha Business Insight. All rights reserved.
+          &copy; {year} {SITE_NAME}. All rights reserved.
+          {isAdmin && (
+            <span className="ml-2 text-xs text-gray-600" title="Visible to admins only">
+              v{APP_VERSION}
+            </span>
+          )}
         </div>
       </div>
     </footer>

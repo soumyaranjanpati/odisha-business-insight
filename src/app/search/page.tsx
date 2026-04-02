@@ -4,7 +4,7 @@ import { SearchClient } from "./SearchClient";
 
 export const metadata: Metadata = {
   title: "Search",
-  description: "Search Odisha Business Insight for articles and news.",
+  description: "Search Odisha Economy for articles and news.",
 };
 
 interface PageProps {

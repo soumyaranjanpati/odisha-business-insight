@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Odisha Business Insight – mission, editorial values and focus on Odisha's economy and business landscape.",
+    "Odisha Economy – mission, editorial values and focus on Odisha's economy and business landscape.",
 };
 
 export default function AboutPage() {
@@ -11,7 +11,7 @@ export default function AboutPage() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="headline text-3xl font-bold text-ink">About Us</h1>
       <p className="mt-4 text-lg text-gray-600">
-        Odisha Business Insight is your trusted source for business news, economic updates and
+        Odisha Economy is your trusted source for business news, economic updates and
         policy coverage from Odisha. We focus on clarity, accuracy and relevance for entrepreneurs,
         policymakers and anyone interested in the state&apos;s economic growth.
       </p>

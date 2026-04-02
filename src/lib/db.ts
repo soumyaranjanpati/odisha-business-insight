@@ -18,7 +18,7 @@ export async function getPublishedArticles(options: {
     .select(
       `
       *,
-      category:categories(*),
+      category:categories!articles_category_id_fkey(*),
       tags:article_tags(tag:tags(*))
     `
     )
@@ -88,7 +88,7 @@ export async function getPublishedArticleBySlug(slug: string) {
     .select(
       `
       *,
-      category:categories(*),
+      category:categories!articles_category_id_fkey(*),
       tags:article_tags(tag:tags(*))
     `
     )
@@ -112,7 +112,7 @@ export async function getRelatedArticles(articleId: string, categoryId: string, 
     .select(
       `
       *,
-      category:categories(*),
+      category:categories!articles_category_id_fkey(*),
       tags:article_tags(tag:tags(*))
     `
     )
@@ -159,7 +159,7 @@ export async function searchArticles(q: string, limit = 20) {
     .select(
       `
       *,
-      category:categories(*),
+      category:categories!articles_category_id_fkey(*),
       tags:article_tags(tag:tags(*))
     `
     )

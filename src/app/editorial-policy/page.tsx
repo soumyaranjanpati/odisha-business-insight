@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Editorial Policy",
   description:
-    "Odisha Business Insight editorial policy covering accuracy, independence, transparency and corrections.",
+    "Odisha Economy editorial policy covering accuracy, independence, transparency and corrections.",
 };
 
 export default function EditorialPolicyPage() {
@@ -12,7 +12,7 @@ export default function EditorialPolicyPage() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="headline text-3xl font-bold text-ink">Editorial Policy</h1>
       <p className="mt-4 text-lg text-gray-600">
-        Odisha Business Insight follows responsible journalism practices to ensure accuracy,
+        Odisha Economy follows responsible journalism practices to ensure accuracy,
         transparency and independence in reporting.
       </p>
 

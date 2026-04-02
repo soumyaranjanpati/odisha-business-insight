@@ -1,5 +1,5 @@
 -- ============================================================
--- Create Editor and Admin Users for Odisha Business Insight
+-- Create Editor and Admin Users for Odisha Economy
 -- ============================================================
 --
 -- STEP 1: Create the users in Supabase Dashboard FIRST

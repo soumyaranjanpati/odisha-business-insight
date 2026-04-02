@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Corrections Policy",
   description:
-    "Corrections Policy for Odisha Business Insight – how we handle and publish factual corrections.",
+    "Corrections Policy for Odisha Economy – how we handle and publish factual corrections.",
 };
 
 export default function CorrectionsPolicyPage() {
@@ -12,7 +12,7 @@ export default function CorrectionsPolicyPage() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="headline text-3xl font-bold text-ink">Corrections Policy</h1>
       <p className="mt-4 text-lg text-gray-600">
-        Odisha Business Insight is committed to accurate and fair reporting. When errors occur,
+        Odisha Economy is committed to accurate and fair reporting. When errors occur,
         we take responsibility and act quickly to set the record straight.
       </p>
 

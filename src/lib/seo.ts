@@ -3,8 +3,7 @@
  * Discover favors: 150–160 char descriptions, 1200px+ images, fresh content, canonical URLs.
  */
 
-const DEFAULT_BASE =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://odisha-business-insight.vercel.app";
+const DEFAULT_BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://odishaeconomy.vercel.app";
 
 /** Max meta description length for Google (Discover & SERP). */
 const META_DESCRIPTION_MAX = 160;
@@ -46,6 +45,8 @@ export function schemaImage(
   return img;
 }
 
-export const SITE_NAME = "Odisha Business Insight";
+export const SITE_NAME = "Odisha Economy";
+/** Shown in header; keep concise for mobile. */
+export const SITE_TAGLINE = "Tracking Growth. Powering Business.";
 export const SITE_DESCRIPTION =
-  "Your trusted source for business news, economy, MSME, startups, policy and infrastructure updates from Odisha.";
+  "Latest news and insights on Odisha's economy, business, startups, and policy developments.";
