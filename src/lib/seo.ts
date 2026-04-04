@@ -3,7 +3,8 @@
  * Discover favors: 150–160 char descriptions, 1200px+ images, fresh content, canonical URLs.
  */
 
-const DEFAULT_BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://odishaeconomy.vercel.app";
+/** Set NEXT_PUBLIC_SITE_URL in production (e.g. https://odishaeconomy.com) for canonicals, OG, and sitemap. */
+const DEFAULT_BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://odishaeconomy.com";
 
 /** Max meta description length for Google (Discover & SERP). */
 const META_DESCRIPTION_MAX = 160;

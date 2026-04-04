@@ -17,6 +17,10 @@ const staticEntries: MetadataRoute.Sitemap = [
   { url: `${BASE}/contact`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
   { url: `${BASE}/search`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.5 },
   { url: `${BASE}/subscribe`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+  { url: `${BASE}/editorial-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+  { url: `${BASE}/privacy-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+  { url: `${BASE}/terms-of-use`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+  { url: `${BASE}/corrections-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
 ];
 
 export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
