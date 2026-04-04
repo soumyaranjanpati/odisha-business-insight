@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getPublishedArticleBySlug, getRelatedArticles } from "@/lib/db";
+import { getAuthorDisplayNameForStaff, getPublishedArticleBySlug, getRelatedArticles } from "@/lib/db";
+import { getProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
 import {
   canonicalUrl,
@@ -91,6 +92,14 @@ export default async function ArticlePage({ params }: PageProps) {
   const hasPremiumAccess = await hasActivePremiumSubscription();
   const showGatedContent = isPremium && !hasPremiumAccess;
 
+  const profile = await getProfile();
+  const isEditorialStaff =
+    profile?.roleName === "editor" || profile?.roleName === "admin";
+  const staffPosterName =
+    isEditorialStaff && article.author_id
+      ? await getAuthorDisplayNameForStaff(article.author_id)
+      : null;
+
   const articleUrl = canonicalUrl(`/article/${article.slug}`);
   const baseUrl = getBaseUrl();
   const authorName = SITE_NAME;
@@ -158,7 +167,19 @@ export default async function ArticlePage({ params }: PageProps) {
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
             <span>By {authorName}</span>
-            <span>•</span>
+            {staffPosterName && (
+              <>
+                <span aria-hidden>•</span>
+                <span
+                  className="text-xs text-gray-600 sm:text-sm"
+                  title="Visible to editors and admins only"
+                >
+                  Added by{" "}
+                  <span className="font-medium text-gray-700">{staffPosterName}</span>
+                </span>
+              </>
+            )}
+            <span aria-hidden>•</span>
             <time dateTime={article.published_at ?? article.created_at}>
               {formatDate(article.published_at ?? article.created_at)}
             </time>

@@ -95,7 +95,6 @@ export async function getPublishedArticleBySlug(slug: string) {
     .eq("slug", slug)
     .eq("status", "published")
     .single();
-    console.log("getPublishedArticleBySlug DEBUG", { slug, error, hasData: !!data });
 
   if (error || !data) return null;
   const [normalized] = normalizeArticles([data as Record<string, unknown>]);
@@ -172,4 +171,29 @@ export async function searchArticles(q: string, limit = 20) {
   if (error) return { data: [], total: 0 };
   const articles = normalizeArticles((data ?? []) as Record<string, unknown>[]);
   return { data: articles, total: articles.length };
+}
+
+/**
+ * Resolve poster display name for editorial staff UI on article pages.
+ * Call only when the viewer is editor/admin. Uses service role when configured so it works in production.
+ */
+export async function getAuthorDisplayNameForStaff(authorId: string): Promise<string | null> {
+  if (!authorId) return null;
+  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceRoleClient()
+    : await createClient();
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("display_name, email")
+    .eq("id", authorId)
+    .maybeSingle();
+  if (error || !data) return null;
+  const name = typeof data.display_name === "string" ? data.display_name.trim() : "";
+  if (name) return name;
+  const email = typeof data.email === "string" ? data.email.trim() : "";
+  if (email) {
+    const local = email.split("@")[0];
+    return local || email;
+  }
+  return null;
 }
