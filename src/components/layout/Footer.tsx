@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getProfile } from "@/lib/auth";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
 import { APP_VERSION } from "@/lib/version";
+import { SocialFollowBlock } from "@/components/layout/SocialFollowBlock";
 
 const CATEGORIES = [
   { slug: "economy", name: "Economy" },
@@ -24,6 +25,32 @@ export async function Footer() {
           <div>
             <h3 className="headline text-lg font-semibold text-white">{SITE_NAME}</h3>
             <p className="mt-2 text-sm text-gray-400">{SITE_DESCRIPTION}</p>
+            <div className="mt-5 border-t border-white/10 pt-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">
+                Development
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-gray-400">
+                Developed and maintained by{" "}
+                <a
+                  href="https://zylva.tech"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-gray-200 underline decoration-gray-600 underline-offset-2 transition-colors hover:text-white hover:decoration-white"
+                >
+                  Zylva Technology
+                </a>
+                .
+              </p>
+              <p className="mt-1.5 text-sm text-gray-500">
+                <span className="text-gray-500">Reach out: </span>
+                <a
+                  href="mailto:connect@zylva.tech"
+                  className="font-medium text-gray-300 underline decoration-gray-600 underline-offset-2 transition-colors hover:text-white hover:decoration-white"
+                >
+                  connect@zylva.tech
+                </a>
+              </p>
+            </div>
           </div>
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
@@ -95,6 +122,9 @@ export async function Footer() {
                 </Link>
               </li>
             </ul>
+            <div className="mt-8 border-t border-white/10 pt-8">
+              <SocialFollowBlock />
+            </div>
           </div>
         </div>
         <div className="mt-10 border-t border-fb-footer-border pt-8 text-center text-sm text-gray-500">

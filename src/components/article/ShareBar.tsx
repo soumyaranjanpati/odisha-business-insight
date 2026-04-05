@@ -8,6 +8,10 @@ export function ShareBar({ title, slug }: { title: string; slug: string }) {
 
   const links = [
     {
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      label: "Facebook",
+    },
+    {
       href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
       label: "Twitter",
     },
@@ -24,7 +28,7 @@ export function ShareBar({ title, slug }: { title: string; slug: string }) {
   return (
     <div className="mt-10 border-t border-gray-200 pt-6">
       <p className="text-sm font-medium text-gray-700">Share this article</p>
-      <div className="mt-2 flex gap-3">
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
         {links.map(({ href, label }) => (
           <a
             key={label}
