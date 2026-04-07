@@ -197,3 +197,20 @@ export async function getAuthorDisplayNameForStaff(authorId: string): Promise<st
   }
   return null;
 }
+
+/**
+ * Get total lifetime views for one article.
+ * Intended for editorial/admin UI only.
+ */
+export async function getArticleViewsCount(articleId: string): Promise<number | null> {
+  if (!articleId) return null;
+  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceRoleClient()
+    : await createClient();
+  const { count, error } = await supabase
+    .from("article_views")
+    .select("id", { count: "exact", head: true })
+    .eq("article_id", articleId);
+  if (error) return null;
+  return count ?? 0;
+}

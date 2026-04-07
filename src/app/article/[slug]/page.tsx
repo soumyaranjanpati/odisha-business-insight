@@ -2,7 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getAuthorDisplayNameForStaff, getPublishedArticleBySlug, getRelatedArticles } from "@/lib/db";
+import {
+  getArticleViewsCount,
+  getAuthorDisplayNameForStaff,
+  getPublishedArticleBySlug,
+  getRelatedArticles,
+} from "@/lib/db";
 import { getProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
 import {
@@ -99,6 +104,7 @@ export default async function ArticlePage({ params }: PageProps) {
     isEditorialStaff && article.author_id
       ? await getAuthorDisplayNameForStaff(article.author_id)
       : null;
+  const articleViewsCount = await getArticleViewsCount(article.id);
 
   const articleUrl = canonicalUrl(`/article/${article.slug}`);
   const baseUrl = getBaseUrl();
@@ -198,6 +204,12 @@ export default async function ArticlePage({ params }: PageProps) {
               <>
                 <span>•</span>
                 <span>{article.reading_time_minutes} min read</span>
+              </>
+            )}
+            {articleViewsCount !== null && (
+              <>
+                <span>•</span>
+                <span>{articleViewsCount.toLocaleString()} views</span>
               </>
             )}
             <ArticleBadges article={article} />

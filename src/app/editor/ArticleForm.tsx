@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { createOrUpdateArticle } from "@/app/actions/articles";
+import { uploadFeaturedArticleImage } from "@/app/actions/article-images";
 import type { Article, Category, Tag } from "@/types";
 
 type ArticleStatus = Article["status"];
@@ -21,9 +22,15 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [title, setTitle] = useState(article?.title ?? "");
   const [slug, setSlug] = useState(article?.slug ?? "");
   const [slugEdited, setSlugEdited] = useState(!!article?.slug);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState(article?.featured_image_url ?? "");
+  const [featuredImageAlt, setFeaturedImageAlt] = useState(article?.featured_image_alt ?? "");
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const featuredFileRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!article;
 
@@ -39,6 +46,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    setSuccess("");
     const form = e.currentTarget;
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | undefined;
     const formData = new FormData(form, submitter ?? undefined);
@@ -58,8 +66,8 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
         category_ids: categoryIds,
         tag_ids: tagIds,
         status,
-        featured_image_url: (formData.get("featured_image_url") as string) || null,
-        featured_image_alt: (formData.get("featured_image_alt") as string) || null,
+        featured_image_url: featuredImageUrl.trim() || null,
+        featured_image_alt: featuredImageAlt.trim() || null,
         meta_title: (formData.get("meta_title") as string) || null,
         meta_description: (formData.get("meta_description") as string) || null,
         is_premium: formData.get("is_premium") === "on",
@@ -68,8 +76,15 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
       });
 
       if (result.success && result.slug) {
-        router.push(`/editor/edit/${result.slug}`);
-        router.refresh();
+        if (isEdit) {
+          router.push(`/editor/edit/${result.slug}`);
+          router.refresh();
+        } else {
+          setSuccess("Post saved successfully. Reloading...");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1200);
+        }
       } else {
         setError(result.message ?? "Failed to save article.");
       }
@@ -129,19 +144,82 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
               Use HTML for formatting (e.g. &lt;p&gt;, &lt;h2&gt;, &lt;a&gt;, &lt;strong&gt;).
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Featured image (URL)"
-              name="featured_image_url"
-              defaultValue={article?.featured_image_url ?? ""}
-              placeholder="https://..."
-            />
-            <Input
-              label="Featured image alt text"
-              name="featured_image_alt"
-              defaultValue={article?.featured_image_alt ?? ""}
-              placeholder="Description for accessibility"
-            />
+          <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+            <p className="text-sm font-medium text-gray-800">Featured image</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Upload to Supabase storage, or paste any image URL below. URL stays editable after upload.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <input
+                ref={featuredFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="max-w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-primary-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-primary-700"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                isLoading={uploadBusy}
+                onClick={async () => {
+                  const file = featuredFileRef.current?.files?.[0];
+                  if (!file) {
+                    setUploadMsg({ type: "err", text: "Choose an image file first." });
+                    return;
+                  }
+                  setUploadBusy(true);
+                  setUploadMsg(null);
+                  const fd = new FormData();
+                  fd.set("file", file);
+                  const result = await uploadFeaturedArticleImage(fd);
+                  setUploadBusy(false);
+                  if ("error" in result) {
+                    setUploadMsg({ type: "err", text: result.error });
+                    return;
+                  }
+                  setFeaturedImageUrl(result.url);
+                  setUploadMsg({
+                    type: "ok",
+                    text: "Uploaded. URL filled below—you can edit it or change alt text.",
+                  });
+                  if (featuredFileRef.current) featuredFileRef.current.value = "";
+                }}
+              >
+                Upload to storage
+              </Button>
+            </div>
+            {uploadMsg && (
+              <p
+                className={`mt-2 text-sm ${uploadMsg.type === "ok" ? "text-green-700" : "text-red-600"}`}
+              >
+                {uploadMsg.text}
+              </p>
+            )}
+            {featuredImageUrl.trim() && (
+              <div className="mt-4 max-w-md overflow-hidden rounded-lg border border-gray-200 bg-gray-100 p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element -- preview may be any external URL */}
+                <img
+                  src={featuredImageUrl.trim()}
+                  alt={featuredImageAlt.trim() || "Featured image preview"}
+                  className="mx-auto max-h-48 w-auto max-w-full object-contain"
+                />
+              </div>
+            )}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Featured image (URL)"
+                name="featured_image_url"
+                value={featuredImageUrl}
+                onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                placeholder="https://... (filled after upload or paste manually)"
+              />
+              <Input
+                label="Featured image alt text"
+                name="featured_image_alt"
+                value={featuredImageAlt}
+                onChange={(e) => setFeaturedImageAlt(e.target.value)}
+                placeholder="Description for accessibility"
+              />
+            </div>
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">Categories</label>
@@ -239,6 +317,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
       </Card>
 
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {success && <p className="mb-4 text-sm text-green-700">{success}</p>}
 
       <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4">
         <Button
