@@ -24,6 +24,23 @@ interface CreateOrUpdateInput {
   sponsored_by?: string | null;
 }
 
+function stripHtml(input: string): string {
+  return input
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateSmart(text: string, max = 160): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trim() + "…";
+}
+
 export async function createOrUpdateArticle(
   input: CreateOrUpdateInput
 ): Promise<{ success: boolean; message?: string; slug?: string }> {
@@ -43,6 +60,13 @@ export async function createOrUpdateArticle(
     return { success: false, message: "Please select at least one category" };
   }
   const primaryCategoryId = categoryIds[0];
+  const cleanBodyText = stripHtml(input.body);
+  const autoExcerpt = input.excerpt?.trim() || truncateSmart(cleanBodyText, 220);
+  const autoMetaTitle = input.meta_title?.trim() || input.title.trim();
+  const autoMetaDescription =
+    input.meta_description?.trim() ||
+    input.excerpt?.trim() ||
+    truncateSmart(cleanBodyText, 160);
 
   const reading_time_minutes = readingTimeMinutes(input.body);
   const published_at =
@@ -68,7 +92,7 @@ export async function createOrUpdateArticle(
       .update({
         title: input.title,
         slug,
-        excerpt: input.excerpt || null,
+        excerpt: autoExcerpt || null,
         body: input.body,
         category_id: primaryCategoryId,
         status: input.status,
@@ -76,8 +100,8 @@ export async function createOrUpdateArticle(
         reading_time_minutes,
         featured_image_url: input.featured_image_url || null,
         featured_image_alt: input.featured_image_alt || null,
-        meta_title: input.meta_title || null,
-        meta_description: input.meta_description || null,
+        meta_title: autoMetaTitle || null,
+        meta_description: autoMetaDescription || null,
         is_premium: input.is_premium ?? false,
         is_sponsored: input.is_sponsored ?? false,
         sponsored_by: input.sponsored_by?.trim() || null,
@@ -113,7 +137,7 @@ export async function createOrUpdateArticle(
       author_id: profile.id,
       title: input.title,
       slug,
-      excerpt: input.excerpt || null,
+      excerpt: autoExcerpt || null,
       body: input.body,
       category_id: primaryCategoryId,
       status: input.status,
@@ -121,8 +145,8 @@ export async function createOrUpdateArticle(
       reading_time_minutes,
       featured_image_url: input.featured_image_url || null,
       featured_image_alt: input.featured_image_alt || null,
-      meta_title: input.meta_title || null,
-      meta_description: input.meta_description || null,
+      meta_title: autoMetaTitle || null,
+      meta_description: autoMetaDescription || null,
       is_premium: input.is_premium ?? false,
       is_sponsored: input.is_sponsored ?? false,
       sponsored_by: input.sponsored_by?.trim() || null,

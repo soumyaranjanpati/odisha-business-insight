@@ -30,7 +30,13 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
   const [featuredImageAlt, setFeaturedImageAlt] = useState(article?.featured_image_alt ?? "");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [metaTitle, setMetaTitle] = useState(article?.meta_title ?? "");
+  const [metaDescription, setMetaDescription] = useState(article?.meta_description ?? "");
+  const [seoLoading, setSeoLoading] = useState(false);
+  const [seoNotice, setSeoNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const featuredFileRef = useRef<HTMLInputElement>(null);
+  const excerptRef = useRef<HTMLTextAreaElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const isEdit = !!article;
 
@@ -41,6 +47,38 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
       .replace(/[^\w\s-]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
+  }
+
+  async function handleGenerateSEO() {
+    setSeoLoading(true);
+    setSeoNotice(null);
+    try {
+      const res = await fetch("/api/generate-seo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          summary: excerptRef.current?.value ?? "",
+          content: bodyRef.current?.value ?? "",
+        }),
+      });
+      const data = (await res.json()) as {
+        meta_title?: string;
+        meta_description?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(data.error ?? "Request failed");
+      }
+      setMetaTitle(data.meta_title ?? "");
+      setMetaDescription(data.meta_description ?? "");
+      setSeoNotice({ type: "ok", text: "SEO generated" });
+    } catch (err) {
+      console.error(err);
+      setSeoNotice({ type: "err", text: "Failed to generate SEO" });
+    } finally {
+      setSeoLoading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -123,6 +161,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Summary</label>
             <textarea
+              ref={excerptRef}
               name="excerpt"
               rows={2}
               defaultValue={article?.excerpt ?? ""}
@@ -133,6 +172,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Content</label>
             <textarea
+              ref={bodyRef}
               name="body"
               rows={14}
               required
@@ -143,6 +183,54 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
             <p className="mt-1 text-xs text-gray-500">
               Use HTML for formatting (e.g. &lt;p&gt;, &lt;h2&gt;, &lt;a&gt;, &lt;strong&gt;).
             </p>
+          </div>
+          <div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-gray-700">Meta title &amp; description (SEO)</p>
+              <button
+                type="button"
+                disabled={seoLoading}
+                onClick={handleGenerateSEO}
+                className="inline-flex items-center justify-center rounded-lg bg-gray-200 px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              >
+                {seoLoading ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Generating...
+                  </>
+                ) : (
+                  "✨ Generate SEO"
+                )}
+              </button>
+            </div>
+            {seoNotice && (
+              <p
+                className={`mb-3 text-sm ${seoNotice.type === "ok" ? "text-green-700" : "text-red-600"}`}
+                role="status"
+              >
+                {seoNotice.text}
+              </p>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Meta title (SEO)"
+                name="meta_title"
+                value={metaTitle}
+                onChange={(e) => setMetaTitle(e.target.value)}
+              />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Meta description (SEO)
+                </label>
+                <textarea
+                  name="meta_description"
+                  rows={2}
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                />
+              </div>
+            </div>
           </div>
           <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
             <p className="text-sm font-medium text-gray-800">Featured image</p>
@@ -258,24 +346,6 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
                   <span className="text-sm">{t.name}</span>
                 </label>
               ))}
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Meta title (SEO)"
-              name="meta_title"
-              defaultValue={article?.meta_title ?? ""}
-            />
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Meta description (SEO)
-              </label>
-              <textarea
-                name="meta_description"
-                rows={2}
-                defaultValue={article?.meta_description ?? ""}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-              />
             </div>
           </div>
           <div>

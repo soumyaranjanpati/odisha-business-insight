@@ -79,8 +79,8 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
       <div className="min-w-0">
-        {/* Categories strip */}
-        <nav className="mb-10 flex flex-wrap gap-2">
+        {/* Categories strip — hidden on small screens (header Categories menu covers this) */}
+        <nav className="mb-10 hidden flex-wrap gap-2 md:flex" aria-label="Browse by category">
           {CATEGORY_NAV.map((c) => (
             <Link
               key={c.slug}
