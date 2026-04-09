@@ -3,9 +3,15 @@ import { SITE_NAME } from "@/lib/seo";
 import { SidebarAds } from "@/components/SidebarAds";
 import { getPublishedArticles } from "@/lib/db";
 import { NewsletterForm } from "@/components/article/NewsletterForm";
+import type { ArticleWithRelations } from "@/types";
 
-export async function SidebarRight() {
-  const { data: trending } = await getPublishedArticles({ limit: 5, offset: 0 });
+type SidebarRightProps = {
+  trendingArticles?: ArticleWithRelations[];
+};
+
+export async function SidebarRight({ trendingArticles }: SidebarRightProps = {}) {
+  const trending =
+    trendingArticles ?? (await getPublishedArticles({ limit: 5, offset: 0 })).data;
 
   return (
     <aside className="space-y-8">

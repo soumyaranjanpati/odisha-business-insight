@@ -1,12 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getFeaturedArticles, getPublishedArticles } from "@/lib/db";
+import { getPublishedArticles } from "@/lib/db";
 import { ArticleCard } from "@/components/article/ArticleCard";
-import { ArticleListSkeleton } from "@/components/ui/Skeleton";
 import { CATEGORY_NAV } from "@/lib/categories";
 import { SidebarRight } from "@/components/SidebarRight";
 import { SITE_NAME } from "@/lib/seo";
-import { Suspense } from "react";
+import type { ArticleWithRelations } from "@/types";
 
 export const metadata: Metadata = {
   title: {
@@ -18,8 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-async function FeaturedSection() {
-  const featured = await getFeaturedArticles(3);
+function FeaturedSection({ featured }: { featured: ArticleWithRelations[] }) {
   if (featured.length === 0) {
     return (
       <section aria-labelledby="top-stories-heading" className="rounded-xl border border-gray-200 bg-gray-50 p-8 text-center text-gray-600">
@@ -64,8 +62,7 @@ async function FeaturedSection() {
   );
 }
 
-async function LatestSection() {
-  const { data: latest } = await getPublishedArticles({ limit: 6, offset: 3 });
+function LatestSection({ latest }: { latest: ArticleWithRelations[] }) {
   if (latest.length === 0) return null;
   return (
     <section aria-labelledby="latest-heading" aria-describedby="latest-desc">
@@ -86,7 +83,12 @@ async function LatestSection() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { data: homeArticles } = await getPublishedArticles({ limit: 9, offset: 0 });
+  const featured = homeArticles.slice(0, 3);
+  const latest = homeArticles.slice(3, 9);
+  const trending = homeArticles.slice(0, 5);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
       <div className="min-w-0">
@@ -97,6 +99,7 @@ export default function HomePage() {
             <Link
               key={c.slug}
               href={`/category/${c.slug}`}
+              prefetch={false}
               className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-primary-500 hover:text-primary-600"
             >
               {c.name}
@@ -104,20 +107,16 @@ export default function HomePage() {
           ))}
         </nav>
 
-        <Suspense fallback={<ArticleListSkeleton count={5} />}>
-          <FeaturedSection />
-        </Suspense>
+        <FeaturedSection featured={featured} />
 
         <div className="mt-12">
-          <Suspense fallback={<ArticleListSkeleton count={6} />}>
-            <LatestSection />
-          </Suspense>
+          <LatestSection latest={latest} />
         </div>
       </div>
 
       {/* Right sidebar: ads + trending + newsletter */}
       <aside className="mt-6 lg:mt-0">
-        <SidebarRight />
+        <SidebarRight trendingArticles={trending} />
       </aside>
     </div>
   );

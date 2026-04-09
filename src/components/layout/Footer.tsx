@@ -61,6 +61,7 @@ export async function Footer() {
                 <li key={c.slug}>
                   <Link
                     href={`/category/${c.slug}`}
+                    prefetch={false}
                     className="text-sm text-gray-400 hover:text-white"
                   >
                     {c.name}
@@ -75,27 +76,27 @@ export async function Footer() {
             </h4>
             <ul className="mt-3 space-y-2">
               <li>
-                <Link href="/about" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/about" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/editorial-policy" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/editorial-policy" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   Editorial Policy
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/contact" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/search" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/search" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   Search
                 </Link>
               </li>
               <li>
-                <Link href="/subscribe" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/subscribe" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   Subscribe
                 </Link>
               </li>
@@ -107,17 +108,17 @@ export async function Footer() {
             </h4>
             <ul className="mt-3 space-y-2">
               <li>
-                <Link href="/privacy-policy" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/privacy-policy" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms-of-use" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/terms-of-use" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   Terms of Use
                 </Link>
               </li>
               <li>
-                <Link href="/corrections-policy" className="text-sm text-gray-400 hover:text-white">
+                <Link href="/corrections-policy" prefetch={false} className="text-sm text-gray-400 hover:text-white">
                   Corrections Policy
                 </Link>
               </li>
