@@ -6,7 +6,7 @@ import { HeaderWithAuth } from "@/components/layout/HeaderWithAuth";
 import { HeaderSkeleton } from "@/components/layout/HeaderSkeleton";
 import { Footer } from "@/components/layout/Footer";
 import { Preconnect } from "@/components/seo/Preconnect";
-import { getBaseUrl, SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
+import { getBaseUrl, getWebSiteSchemaUrl, SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
 
 // Ensure auth (header role) is never cached so role-based nav is correct
 export const dynamic = "force-dynamic";
@@ -33,6 +33,13 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   robots: {
     index: true,
     follow: true,
@@ -44,13 +51,27 @@ const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: SITE_NAME,
+  alternateName: "Odisha Economy News",
   description: SITE_DESCRIPTION,
-  url: getBaseUrl(),
+  url: getWebSiteSchemaUrl(),
   potentialAction: {
     "@type": "SearchAction",
     target: { "@type": "EntryPoint", urlTemplate: `${getBaseUrl()}/search?q={search_term_string}` },
     "query-input": "required name=search_term_string",
   },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE_NAME,
+  url: getWebSiteSchemaUrl(),
+  logo: `${getBaseUrl()}/logo.png`,
+  sameAs: [
+    process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL,
+    process.env.NEXT_PUBLIC_SOCIAL_TWITTER_URL,
+    process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN_URL,
+  ].filter(Boolean),
 };
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
@@ -62,6 +83,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+      </head>
       <body className="min-h-screen flex flex-col bg-white text-ink antialiased">
         <Preconnect />
         {GA_ID && (
@@ -80,10 +111,6 @@ export default function RootLayout({
             </Script>
           </>
         )}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
         <Suspense fallback={<HeaderSkeleton />}>
           <HeaderWithAuth />
         </Suspense>

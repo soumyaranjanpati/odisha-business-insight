@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -19,7 +18,6 @@ interface ArticleFormProps {
 }
 
 export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -115,8 +113,10 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
 
       if (result.success && result.slug) {
         if (isEdit) {
-          router.push(`/editor/edit/${result.slug}`);
-          router.refresh();
+          setSuccess("Post saved successfully. Reloading...");
+          setTimeout(() => {
+            window.location.href = `/editor/edit/${result.slug}`;
+          }, 1200);
         } else {
           setSuccess("Post saved successfully. Reloading...");
           setTimeout(() => {

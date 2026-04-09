@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getFeaturedArticles, getPublishedArticles } from "@/lib/db";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ArticleListSkeleton } from "@/components/ui/Skeleton";
@@ -6,6 +7,16 @@ import { CATEGORY_NAV } from "@/lib/categories";
 import { SidebarRight } from "@/components/SidebarRight";
 import { SITE_NAME } from "@/lib/seo";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Odisha Economy | Business, Policy & Growth News",
+  },
+  openGraph: {
+    siteName: "Odisha Economy",
+    title: "Odisha Economy | Business, Policy & Growth News",
+  },
+};
 
 async function FeaturedSection() {
   const featured = await getFeaturedArticles(3);
@@ -79,6 +90,7 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:grid lg:grid-cols-[1fr_280px] lg:gap-6">
       <div className="min-w-0">
+        <h1 className="headline mb-6 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{SITE_NAME}</h1>
         {/* Categories strip — hidden on small screens (header Categories menu covers this) */}
         <nav className="mb-10 hidden flex-wrap gap-2 md:flex" aria-label="Browse by category">
           {CATEGORY_NAV.map((c) => (

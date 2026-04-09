@@ -17,6 +17,20 @@ export function getBaseUrl(): string {
   return DEFAULT_BASE;
 }
 
+/** Canonical origin for WebSite JSON-LD (Google prefers consistent www for odishaeconomy.com). */
+export function getWebSiteSchemaUrl(): string {
+  try {
+    const url = new URL(getBaseUrl());
+    if (url.hostname === "odishaeconomy.com") {
+      url.hostname = "www.odishaeconomy.com";
+    }
+    const origin = url.origin.replace(/\/$/, "");
+    return `${origin}/`;
+  } catch {
+    return "https://www.odishaeconomy.com/";
+  }
+}
+
 /** Truncate to meta description length without cutting words. */
 export function truncateMetaDescription(text: string, max = META_DESCRIPTION_MAX): string {
   const trimmed = text.trim();
