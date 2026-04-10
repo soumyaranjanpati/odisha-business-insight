@@ -3,6 +3,8 @@
  * Falls back to simple slicing if the API is unavailable or returns invalid JSON.
  */
 
+import { geminiGenerateContentUrl } from "@/lib/gemini-config";
+
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -86,7 +88,7 @@ Article Title: ${safeTitle || "(no title)"}
 Summary: ${safeSummary || "(empty — infer from content if needed)"}
 Content excerpt: ${contentSnippet || "(empty)"}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = geminiGenerateContentUrl(apiKey);
 
   try {
     const response = await fetch(url, {

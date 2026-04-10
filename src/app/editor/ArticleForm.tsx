@@ -30,11 +30,19 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
   const [uploadMsg, setUploadMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [metaTitle, setMetaTitle] = useState(article?.meta_title ?? "");
   const [metaDescription, setMetaDescription] = useState(article?.meta_description ?? "");
-  const [seoLoading, setSeoLoading] = useState(false);
-  const [seoNotice, setSeoNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [excerpt, setExcerpt] = useState(article?.excerpt ?? "");
+  const [body, setBody] = useState(article?.body ?? "");
+  const [sourceUrls, setSourceUrls] = useState("");
+  const [includeOpinionTone, setIncludeOpinionTone] = useState(false);
+  const [articleType, setArticleType] = useState<"news" | "insight" | "viral">("news");
+  const [generateLoading, setGenerateLoading] = useState(false);
+  const [generateStep, setGenerateStep] = useState<"idle" | "fetching" | "generating">("idle");
+  const [generateNotice, setGenerateNotice] = useState<{
+    type: "ok" | "err";
+    text: string;
+    retryable?: boolean;
+  } | null>(null);
   const featuredFileRef = useRef<HTMLInputElement>(null);
-  const excerptRef = useRef<HTMLTextAreaElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const isEdit = !!article;
 
@@ -47,35 +55,68 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
       .replace(/-+/g, "-");
   }
 
-  async function handleGenerateSEO() {
-    setSeoLoading(true);
-    setSeoNotice(null);
+  async function handleGenerateFromUrls() {
+    setGenerateLoading(true);
+    setGenerateNotice(null);
+    setGenerateStep("fetching");
     try {
-      const res = await fetch("/api/generate-seo", {
+      const res = await fetch("/api/generate-article", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
-          summary: excerptRef.current?.value ?? "",
-          content: bodyRef.current?.value ?? "",
+          sourceUrls,
+          includeOpinionTone,
+          articleType,
         }),
       });
+
+      setGenerateStep("generating");
       const data = (await res.json()) as {
+        title?: string;
+        slug?: string;
+        summary?: string;
         meta_title?: string;
         meta_description?: string;
+        content_html?: string;
+        fetchedCount?: number;
+        failedCount?: number;
         error?: string;
+        retryable?: boolean;
+        stage?: "fetch" | "generate";
       };
+
       if (!res.ok) {
-        throw new Error(data.error ?? "Request failed");
+        setGenerateNotice({
+          type: "err",
+          text: data.error ?? "Failed to generate article",
+          retryable: data.retryable ?? data.stage === "generate",
+        });
+        return;
       }
+
+      setTitle(data.title ?? "");
+      setSlug(data.slug ?? "");
+      setSlugEdited(true);
+      setExcerpt(data.summary ?? "");
       setMetaTitle(data.meta_title ?? "");
       setMetaDescription(data.meta_description ?? "");
-      setSeoNotice({ type: "ok", text: "SEO generated" });
+      setBody(data.content_html ?? "");
+
+      const fetchedCount = typeof data.fetchedCount === "number" ? data.fetchedCount : 0;
+      const failedCount = typeof data.failedCount === "number" ? data.failedCount : 0;
+      const partialMessage =
+        failedCount > 0 ? ` Generated using ${fetchedCount} source(s); skipped ${failedCount}.` : "";
+      setGenerateNotice({ type: "ok", text: `Article generated and fields auto-filled.${partialMessage}` });
     } catch (err) {
       console.error(err);
-      setSeoNotice({ type: "err", text: "Failed to generate SEO" });
+      setGenerateNotice({
+        type: "err",
+        text: "Failed to generate article. Please retry.",
+        retryable: true,
+      });
     } finally {
-      setSeoLoading(false);
+      setGenerateLoading(false);
+      setGenerateStep("idle");
     }
   }
 
@@ -133,6 +174,71 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
     <form onSubmit={handleSubmit}>
       <Card className="mb-6">
         <CardContent className="space-y-4 pt-6">
+          <div>
+            <label htmlFor="sourceUrls" className="mb-1 block text-sm font-medium text-gray-700">
+              Source URLs
+            </label>
+            <textarea
+              id="sourceUrls"
+              rows={4}
+              value={sourceUrls}
+              onChange={(e) => setSourceUrls(e.target.value)}
+              placeholder="Enter one or more article URLs (one per line)"
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={includeOpinionTone}
+                onChange={(e) => setIncludeOpinionTone(e.target.checked)}
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              Include Opinion Tone
+            </label>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Article Type</label>
+              <select
+                value={articleType}
+                onChange={(e) => setArticleType(e.target.value as "news" | "insight" | "viral")}
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              >
+                <option value="news">News</option>
+                <option value="insight">Insight</option>
+                <option value="viral">Viral</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <Button type="button" onClick={handleGenerateFromUrls} disabled={generateLoading}>
+              {generateLoading ? "Generating..." : "Generate Article"}
+            </Button>
+            <p className="mt-2 text-xs text-gray-500" role="status">
+              {generateStep === "fetching"
+                ? "Fetching content..."
+                : generateStep === "generating"
+                  ? "Generating article..."
+                  : "Paste URLs, choose options above, then generate."}
+            </p>
+            {generateNotice && (
+              <p
+                className={`mt-2 text-sm ${generateNotice.type === "ok" ? "text-green-700" : "text-red-600"}`}
+              >
+                {generateNotice.text}
+              </p>
+            )}
+            {generateNotice?.type === "err" && generateNotice.retryable && (
+              <button
+                type="button"
+                onClick={handleGenerateFromUrls}
+                disabled={generateLoading}
+                className="mt-2 text-sm font-medium text-primary-700 hover:text-primary-800 disabled:opacity-50"
+              >
+                Retry generation
+              </button>
+            )}
+          </div>
           <Input
             label="Title"
             name="title"
@@ -161,10 +267,10 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Summary</label>
             <textarea
-              ref={excerptRef}
               name="excerpt"
               rows={2}
-              defaultValue={article?.excerpt ?? ""}
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
               className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               placeholder="Short summary for listings and cards"
             />
@@ -172,11 +278,11 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Content</label>
             <textarea
-              ref={bodyRef}
               name="body"
               rows={14}
               required
-              defaultValue={article?.body ?? ""}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
               className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               placeholder="<p>Your content. You can use HTML: &lt;p&gt;, &lt;h2&gt;, &lt;a&gt;, &lt;strong&gt;, &lt;ul&gt;, etc.</p>"
             />
@@ -187,30 +293,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
           <div>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-gray-700">Meta title &amp; description (SEO)</p>
-              <button
-                type="button"
-                disabled={seoLoading}
-                onClick={handleGenerateSEO}
-                className="inline-flex items-center justify-center rounded-lg bg-gray-200 px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-              >
-                {seoLoading ? (
-                  <>
-                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Generating...
-                  </>
-                ) : (
-                  "✨ Generate SEO"
-                )}
-              </button>
             </div>
-            {seoNotice && (
-              <p
-                className={`mb-3 text-sm ${seoNotice.type === "ok" ? "text-green-700" : "text-red-600"}`}
-                role="status"
-              >
-                {seoNotice.text}
-              </p>
-            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
                 label="Meta title (SEO)"
