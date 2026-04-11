@@ -1,14 +1,10 @@
 import { getArticlesForNewsSitemap } from "@/lib/db";
 import { articleCanonicalUrl } from "@/lib/seo";
+import { escapeXml } from "@/lib/sitemap";
 
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+export const dynamic = "force-dynamic";
 
+/** Google News sitemap: articles from the last 48 hours, max 1000. */
 export async function GET() {
   const rows = await getArticlesForNewsSitemap(1000);
   const urls = rows
@@ -38,7 +34,7 @@ ${urls}
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900",
     },
   });
 }

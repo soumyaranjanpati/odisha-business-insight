@@ -32,8 +32,9 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Protect editor dashboard: require auth + editor or admin role
-  if (pathname.startsWith("/editor")) {
+  // Protect editor dashboard only: /editor and /editor/... (not /editorial-policy, etc.)
+  const isEditorAppRoute = pathname === "/editor" || pathname.startsWith("/editor/");
+  if (isEditorAppRoute) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/auth/login";

@@ -1,33 +1,45 @@
 /**
- * Dynamic sitemap data using service role so it runs without request context
- * (e.g. on Vercel serverless or build). Ensures all published articles and
- * categories are included with correct lastModified.
- * When env is missing (e.g. at build), returns static URLs only so build succeeds.
+ * Dynamic sitemap XML builders. Data is fetched on each request (with short CDN cache via Route handlers).
+ * Uses service role when configured so it works without cookies (serverless / edge).
  */
 
-import type { MetadataRoute } from "next";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getBaseUrl } from "@/lib/seo";
 
-const BASE = getBaseUrl();
+export function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
-const staticEntries: MetadataRoute.Sitemap = [
-  { url: BASE, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
-  { url: `${BASE}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
-  { url: `${BASE}/contact`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
-  { url: `${BASE}/search`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.5 },
-  { url: `${BASE}/subscribe`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
-  { url: `${BASE}/editorial-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-  { url: `${BASE}/privacy-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-  { url: `${BASE}/terms-of-use`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-  { url: `${BASE}/corrections-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-  { url: `${BASE}/author/ranjan`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
-  { url: `${BASE}/author/priyanshu`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
-];
+/** Standard sitemap <urlset> with <loc> and <lastmod> (W3C / ISO 8601). */
+export async function buildMainSitemapXml(): Promise<string> {
+  const BASE = getBaseUrl();
+  const now = new Date();
 
-export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+  const staticPaths = [
+    "/",
+    "/about",
+    "/contact",
+    "/search",
+    "/subscribe",
+    "/editorial-policy",
+    "/privacy-policy",
+    "/terms-of-use",
+    "/corrections-policy",
+    "/author/ranjan",
+    "/author/priyanshu",
+  ];
+
+  const entries: { loc: string; lastmod: Date }[] = staticPaths.map((path) => ({
+    loc: `${BASE}${path === "/" ? "" : path}`,
+    lastmod: now,
+  }));
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return staticEntries;
+    return renderUrlset(entries);
   }
 
   const supabase = createServiceRoleClient();
@@ -38,30 +50,44 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   ] = await Promise.all([
     supabase
       .from("articles")
-      .select("slug, published_at, updated_at")
+      .select("slug, updated_at")
       .eq("status", "published")
       .not("published_at", "is", null)
       .order("updated_at", { ascending: false }),
     supabase.from("categories").select("slug, updated_at").order("sort_order"),
   ]);
 
-  const articleUrls = (articles ?? []).map((a: { slug: string; updated_at: string }) => ({
-    url: `${BASE}/${a.slug}`,
-    lastModified: new Date(a.updated_at),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
+  for (const a of articles ?? []) {
+    const row = a as { slug: string; updated_at: string };
+    entries.push({
+      loc: `${BASE}/${encodeURIComponent(row.slug)}`,
+      lastmod: new Date(row.updated_at),
+    });
+  }
 
-  const categoryUrls = (categories ?? []).map((c: { slug: string; updated_at: string }) => ({
-    url: `${BASE}/category/${c.slug}`,
-    lastModified: new Date(c.updated_at),
-    changeFrequency: "daily" as const,
-    priority: 0.7,
-  }));
+  for (const c of categories ?? []) {
+    const row = c as { slug: string; updated_at: string };
+    entries.push({
+      loc: `${BASE}/category/${encodeURIComponent(row.slug)}`,
+      lastmod: new Date(row.updated_at),
+    });
+  }
 
-  return [
-    ...staticEntries,
-    ...categoryUrls,
-    ...articleUrls,
-  ];
+  return renderUrlset(entries);
+}
+
+function renderUrlset(entries: { loc: string; lastmod: Date }[]): string {
+  const body = entries
+    .map(
+      (e) => `  <url>
+    <loc>${escapeXml(e.loc)}</loc>
+    <lastmod>${escapeXml(e.lastmod.toISOString())}</lastmod>
+  </url>`
+    )
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${body}
+</urlset>`;
 }
