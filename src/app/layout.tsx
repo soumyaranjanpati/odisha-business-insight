@@ -6,7 +6,7 @@ import { HeaderWithAuth } from "@/components/layout/HeaderWithAuth";
 import { HeaderSkeleton } from "@/components/layout/HeaderSkeleton";
 import { Footer } from "@/components/layout/Footer";
 import { Preconnect } from "@/components/seo/Preconnect";
-import { getBaseUrl, getWebSiteSchemaUrl, SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
+import { getBaseUrl, getCanonicalOrigin, getWebSiteSchemaUrl, SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
 
 // Ensure auth (header role) is never cached so role-based nav is correct
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(getBaseUrl()),
+  metadataBase: new URL(getCanonicalOrigin()),
   applicationName: SITE_NAME,
   title: {
     default: `${SITE_NAME} | Business, Policy & Growth News`,

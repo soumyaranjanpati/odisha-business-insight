@@ -21,6 +21,8 @@ const staticEntries: MetadataRoute.Sitemap = [
   { url: `${BASE}/privacy-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   { url: `${BASE}/terms-of-use`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   { url: `${BASE}/corrections-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+  { url: `${BASE}/author/ranjan`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
+  { url: `${BASE}/author/priyanshu`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.6 },
 ];
 
 export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
@@ -44,7 +46,7 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const articleUrls = (articles ?? []).map((a: { slug: string; updated_at: string }) => ({
-    url: `${BASE}/article/${a.slug}`,
+    url: `${BASE}/${a.slug}`,
     lastModified: new Date(a.updated_at),
     changeFrequency: "weekly" as const,
     priority: 0.8,

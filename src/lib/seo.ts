@@ -3,8 +3,21 @@
  * Discover favors: 150–160 char descriptions, 1200px+ images, fresh content, canonical URLs.
  */
 
-/** Set NEXT_PUBLIC_SITE_URL in production (e.g. https://odishaeconomy.com) for canonicals, OG, and sitemap. */
+/** Env site URL; normalized to www for odishaeconomy.com in getCanonicalOrigin(). */
 const DEFAULT_BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://odishaeconomy.com";
+
+/** Public origin for canonicals, OG, sitemaps (Google prefers consistent www on odishaeconomy.com). */
+export function getCanonicalOrigin(): string {
+  try {
+    const u = new URL(DEFAULT_BASE);
+    if (u.hostname === "odishaeconomy.com" || u.hostname === "www.odishaeconomy.com") {
+      return "https://www.odishaeconomy.com";
+    }
+    return u.origin.replace(/\/$/, "");
+  } catch {
+    return "https://www.odishaeconomy.com";
+  }
+}
 
 /** Max meta description length for Google (Discover & SERP). */
 const META_DESCRIPTION_MAX = 160;
@@ -14,7 +27,22 @@ export const DISCOVER_IMAGE_MIN_WIDTH = 1200;
 export const DISCOVER_IMAGE_MIN_HEIGHT = 630;
 
 export function getBaseUrl(): string {
-  return DEFAULT_BASE;
+  return getCanonicalOrigin();
+}
+
+/** Clean article path: /{slug} (no /article prefix). */
+export function articlePublicPath(slug: string): string {
+  return `/${encodeURIComponent(slug)}`;
+}
+
+/** Absolute canonical URL for a published article (root path). */
+export function articleCanonicalUrl(slug: string): string {
+  return `${getCanonicalOrigin()}${articlePublicPath(slug)}`;
+}
+
+/** Google ping URL for the news sitemap (uses live origin). */
+export function getGoogleNewsPingUrl(): string {
+  return `https://www.google.com/ping?sitemap=${encodeURIComponent(`${getCanonicalOrigin()}/news-sitemap.xml`)}`;
 }
 
 /** Canonical origin for WebSite JSON-LD (Google prefers consistent www for odishaeconomy.com). */
@@ -40,10 +68,10 @@ export function truncateMetaDescription(text: string, max = META_DESCRIPTION_MAX
   return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trim() + "…";
 }
 
-/** Canonical URL for a path (no trailing slash). */
+/** Canonical URL for a path (no trailing slash), www-normalized. */
 export function canonicalUrl(path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `${DEFAULT_BASE}${p}`;
+  return `${getCanonicalOrigin()}${p}`;
 }
 
 /** Build NewsArticle / Article image for schema (Discover prefers 1200x630). */

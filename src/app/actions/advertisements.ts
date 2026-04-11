@@ -86,6 +86,7 @@ export async function saveAdvertisement(
     revalidatePath("/editor/advertisements/new");
     revalidatePath("/");
     revalidatePath("/article/[slug]", "page");
+    revalidatePath("/[slug]", "page");
     return { success: true, id: data.id };
   }
 
@@ -95,6 +96,7 @@ export async function saveAdvertisement(
   revalidatePath("/editor/advertisements/new");
   revalidatePath("/");
   revalidatePath("/article/[slug]", "page");
+  revalidatePath("/[slug]", "page");
   return { success: true, id: row.id };
 }
 
@@ -109,5 +111,6 @@ export async function deleteAdvertisement(id: string): Promise<{ success: boolea
   revalidatePath("/editor/advertisements");
   revalidatePath("/");
   revalidatePath("/article/[slug]", "page");
+  revalidatePath("/[slug]", "page");
   return { success: true, message: "Ad deleted" };
 }

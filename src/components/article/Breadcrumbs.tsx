@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { canonicalUrl } from "@/lib/seo";
+import { articleCanonicalUrl, canonicalUrl } from "@/lib/seo";
 
 type Props = {
   categorySlug?: string;
@@ -31,8 +31,8 @@ export function ArticleBreadcrumbs({
       : []),
     {
       name: articleTitle,
-      href: `/article/${articleSlug}`,
-      item: canonicalUrl(`/article/${articleSlug}`),
+      href: `/${articleSlug}`,
+      item: articleCanonicalUrl(articleSlug),
     },
   ];
 
@@ -73,8 +73,10 @@ export function ArticleBreadcrumbs({
             </>
           )}
           <li aria-hidden="true">/</li>
-          <li className="truncate max-w-[60vw] sm:max-w-xs">
-            <span className="text-gray-600">{articleTitle}</span>
+          <li className="max-w-[60vw] truncate sm:max-w-xs">
+            <Link href={`/${articleSlug}`} className="text-gray-600 hover:underline">
+              {articleTitle}
+            </Link>
           </li>
         </ol>
       </nav>

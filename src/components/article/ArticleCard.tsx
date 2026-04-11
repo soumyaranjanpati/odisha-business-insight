@@ -2,7 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { ArticleBadges } from "@/components/article/ArticleBadges";
-import type { ArticleWithRelations } from "@/types";
+import type { ArticleWithRelations, Category } from "@/types";
+import { articlePublicPath } from "@/lib/seo";
+
+function categoriesForCard(article: ArticleWithRelations): Category[] {
+  if (article.categories?.length) return article.categories;
+  if (article.category) return [article.category];
+  return [];
+}
 
 interface ArticleCardProps {
   article: ArticleWithRelations;
@@ -12,8 +19,8 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article, variant = "default", priority = false }: ArticleCardProps) {
-  const href = `/article/${article.slug}`;
-  const category = article.category;
+  const href = articlePublicPath(article.slug);
+  const categories = categoriesForCard(article);
 
   if (variant === "featured") {
     return (
@@ -28,6 +35,7 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
               sizes="(max-width: 768px) 100vw, 1200px"
               priority={priority}
               fetchPriority={priority ? "high" : undefined}
+              loading={priority ? undefined : "lazy"}
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-gray-200 text-gray-400">
@@ -35,9 +43,20 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
             </div>
           )}
           <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
-            <span className="rounded bg-primary-600 px-2 py-1 text-xs font-medium text-white">
-              {category?.name ?? "News"}
-            </span>
+            {categories.length > 0 ? (
+              categories.map((c) => (
+                <span
+                  key={c.id}
+                  className="rounded bg-primary-600 px-2 py-1 text-xs font-medium text-white"
+                >
+                  {c.name}
+                </span>
+              ))
+            ) : (
+              <span className="rounded bg-primary-600 px-2 py-1 text-xs font-medium text-white">
+                News
+              </span>
+            )}
             <ArticleBadges article={article} />
           </div>
         </div>
@@ -72,12 +91,15 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
               fill
               className="object-cover transition-transform group-hover:scale-105"
               sizes="150px"
+              loading="lazy"
             />
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="text-xs font-medium text-primary-600">{category?.name}</span>
+            <span className="text-xs font-medium text-primary-600">
+              {categories.length > 0 ? categories.map((c) => c.name).join(" · ") : "News"}
+            </span>
             <ArticleBadges article={article} inline />
           </div>
           <h3 className="headline mt-0.5 font-semibold text-ink line-clamp-2 group-hover:text-primary-600">
@@ -102,6 +124,7 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
             fill
             className="object-cover transition-transform group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, 400px"
+            loading="lazy"
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-gray-200 text-gray-400 text-sm">
@@ -109,9 +132,20 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
           </div>
         )}
         <div className="absolute bottom-2 left-2 flex flex-wrap gap-1.5">
-          <span className="rounded bg-primary-600 px-2 py-0.5 text-xs font-medium text-white">
-            {category?.name ?? "News"}
-          </span>
+          {categories.length > 0 ? (
+            categories.map((c) => (
+              <span
+                key={c.id}
+                className="rounded bg-primary-600 px-2 py-0.5 text-xs font-medium text-white"
+              >
+                {c.name}
+              </span>
+            ))
+          ) : (
+            <span className="rounded bg-primary-600 px-2 py-0.5 text-xs font-medium text-white">
+              News
+            </span>
+          )}
           <ArticleBadges article={article} />
         </div>
       </div>

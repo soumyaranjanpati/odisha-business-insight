@@ -11,7 +11,24 @@ export type GeneratedArticle = {
   meta_title: string;
   meta_description: string;
   content_html: string;
+  /** Odisha economic / business / policy impact — distinct from main body */
+  why_this_matters: string;
+  /** Plain text; API may also set `source` from URLs */
+  source: string;
 };
+
+/** Human-readable attribution line from fetched URLs (domains). */
+export function formatSourceLineFromUrls(urls: string[]): string {
+  if (!urls.length) return "";
+  const parts = urls.map((u) => {
+    try {
+      return new URL(u).hostname.replace(/^www\./i, "");
+    } catch {
+      return u;
+    }
+  });
+  return `Sources: ${parts.join(", ")}`;
+}
 
 type GenerateArticleResult = {
   article: GeneratedArticle | null;
@@ -79,6 +96,9 @@ function fallbackArticleFromText(combinedText: string): GeneratedArticle {
   const p1 = trimWords(combinedText, 100);
   const p2 = trimWords(combinedText.split(" ").slice(100).join(" "), 100);
   const content_html = `<p>${p1 || "No readable source content was available."}</p><h2>Economic Context</h2><p>${p2 || "This development may influence Odisha's MSME ecosystem and downstream value chains over time."}</p><p><strong>Now onwards, actual value creation has started.</strong></p>`;
+  const why_this_matters =
+    "For Odisha, developments like this can affect investment sentiment, local industry linkages, and policy priorities—worth watching for MSMEs and project pipelines in the state.";
+  const source = "";
 
   return {
     title,
@@ -87,6 +107,8 @@ function fallbackArticleFromText(combinedText: string): GeneratedArticle {
     meta_title,
     meta_description,
     content_html,
+    why_this_matters,
+    source,
   };
 }
 
@@ -96,6 +118,10 @@ function asGeneratedArticle(value: unknown, combinedText?: string): GeneratedArt
   const partialTitle = typeof record.title === "string" ? sanitizeText(record.title) : "";
   const partialSummary = typeof record.summary === "string" ? sanitizeText(record.summary) : "";
   const fallback = fallbackArticleFromText(combinedText ?? "");
+  const partialWhy =
+    typeof record.why_this_matters === "string" ? sanitizeText(record.why_this_matters) : "";
+  const partialSource = typeof record.source === "string" ? sanitizeText(record.source) : "";
+
   const output: GeneratedArticle = {
     title: partialTitle || fallback.title,
     slug: typeof record.slug === "string" ? sanitizeText(record.slug).toLowerCase() : "",
@@ -104,6 +130,8 @@ function asGeneratedArticle(value: unknown, combinedText?: string): GeneratedArt
     meta_description:
       typeof record.meta_description === "string" ? sanitizeText(record.meta_description) : fallback.meta_description,
     content_html: typeof record.content_html === "string" ? record.content_html.trim() : fallback.content_html,
+    why_this_matters: partialWhy || fallback.why_this_matters,
+    source: partialSource || fallback.source,
   };
 
   output.slug = makeSlug(output.slug || output.title || fallback.title);
@@ -113,6 +141,8 @@ function asGeneratedArticle(value: unknown, combinedText?: string): GeneratedArt
   if (!output.summary) output.summary = fallback.summary;
   if (!output.title) output.title = fallback.title;
   if (!output.slug) output.slug = fallback.slug;
+  if (!output.why_this_matters) output.why_this_matters = fallback.why_this_matters;
+  if (!output.source) output.source = fallback.source;
   return output;
 }
 
@@ -234,7 +264,7 @@ STRICT RULES:
 - Add future outlook and industrial significance
 - Use clear, professional, Business Standard-style tone
 ${opinionLine}
-- End with a strong line:
+- End the main article body (content_html) with a strong line:
   'Now onwards, actual value creation has started.'
 
 Return ONLY valid JSON:
@@ -245,20 +275,25 @@ Return ONLY valid JSON:
   "summary": "...",
   "meta_title": "...",
   "meta_description": "...",
-  "content_html": "..."
+  "content_html": "...",
+  "why_this_matters": "...",
+  "source": "..."
 }
 
 Field Rules:
 - title: high CTR, under 60 chars
 - slug: lowercase, hyphen-separated, SEO-friendly
-- summary: 20-30 words
+- summary: 2-3 short lines of plain text (use \\n between lines). Must answer what happened, where, and who — factual intro only.
 - meta_title: SEO optimized (can differ slightly from title)
 - meta_description: 140-160 characters
 - content_html:
-   - Use clean HTML
-   - Include <p>, <h2>, <ul>, <strong>
+   - Main story only (NOT the why_this_matters section)
+   - Use clean HTML in paragraphs
+   - Include <p>, <h2>, <ul>, <strong> where useful
    - No markdown
    - No external links
+- why_this_matters: separate plain text (no HTML). 2-4 sentences on economic, business, or policy impact specifically for Odisha (investments, jobs, MSMEs, infrastructure, fiscal/policy angle). Must not duplicate the summary verbatim.
+- source: short plain-text attribution such as "Based on reporting from [outlet names]" — only if inferable from input; otherwise "".
 
 IMPORTANT:
 - Do not hallucinate numbers

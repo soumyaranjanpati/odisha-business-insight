@@ -11,7 +11,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return generateArticlePageMetadata(slug);
 }
 
-export default async function ArticlePage({ params }: PageProps) {
+/** Clean article URLs: /{slug} (canonical). /article/{slug} remains supported. */
+export default async function ArticleBySlugPage({ params }: PageProps) {
   const { slug } = await params;
   return <ArticlePageView slug={slug} />;
 }

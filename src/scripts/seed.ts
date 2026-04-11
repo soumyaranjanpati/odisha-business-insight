@@ -24,6 +24,12 @@ const CATEGORIES = [
   { name: "MSME", slug: "msme", description: "MSME and small business", sort_order: 2 },
   { name: "Startups", slug: "startups", description: "Startups and innovation", sort_order: 3 },
   { name: "Policy", slug: "policy", description: "Policy and regulation", sort_order: 4 },
+  {
+    name: "Industry",
+    slug: "industry",
+    description: "Manufacturing, industrial corridors, and sector developments in Odisha.",
+    sort_order: 12,
+  },
   { name: "Infrastructure", slug: "infrastructure", description: "Infrastructure and projects", sort_order: 5 },
   { name: "Markets", slug: "markets", description: "Markets and investments", sort_order: 6 },
   {

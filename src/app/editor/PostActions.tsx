@@ -30,7 +30,7 @@ export function PostActions({
     <div className="ml-4 flex shrink-0 gap-2">
       {status === "published" && (
         <a
-          href={`/article/${slug}`}
+          href={`/${slug}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-primary-600 hover:underline"

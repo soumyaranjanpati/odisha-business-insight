@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { articlePublicPath } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -78,7 +79,7 @@ export default async function AdminArticlesPage({ searchParams }: PageProps) {
                 <tr key={a.id} className="border-b border-gray-100">
                   <td className="px-4 py-3">
                     <Link
-                      href={`/article/${a.slug}`}
+                      href={articlePublicPath(a.slug)}
                       target="_blank"
                       className="font-medium text-primary-600 hover:underline"
                     >

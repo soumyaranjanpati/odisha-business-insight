@@ -1,10 +1,10 @@
 "use client";
 
-import { getBaseUrl } from "@/lib/seo";
+import { articlePublicPath, getBaseUrl } from "@/lib/seo";
 
 export function ShareBar({ title, slug }: { title: string; slug: string }) {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : getBaseUrl();
-  const url = `${baseUrl}/article/${slug}`;
+  const url = `${baseUrl}${articlePublicPath(slug)}`;
 
   const links = [
     {

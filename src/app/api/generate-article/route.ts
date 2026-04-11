@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireEditor } from "@/lib/auth";
 import {
   combineContentFromUrls,
+  formatSourceLineFromUrls,
   generateArticleFromCombinedText,
   parseSourceUrls,
 } from "@/lib/article-generate";
@@ -60,8 +61,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const sourceLine =
+      generated.article.source?.trim() || formatSourceLineFromUrls(urls);
+
     return NextResponse.json({
       ...generated.article,
+      source: sourceLine,
       fetchedCount,
       failedCount,
       totalValidUrls: urls.length,

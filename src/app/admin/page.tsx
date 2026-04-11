@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { articlePublicPath } from "@/lib/seo";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { getAdminAnalytics } from "@/lib/admin-analytics";
@@ -103,7 +104,7 @@ export default async function AdminDashboardPage() {
                     {analytics.top_articles.map((a) => (
                       <li key={a.article_id} className="flex items-center justify-between gap-3 px-4 py-3">
                         <Link
-                          href={`/article/${a.slug}`}
+                          href={articlePublicPath(a.slug)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block min-w-0 flex-1 truncate font-medium text-primary-600 hover:underline"

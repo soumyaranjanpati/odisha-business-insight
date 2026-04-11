@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SITE_NAME } from "@/lib/seo";
+import { SITE_NAME, articlePublicPath } from "@/lib/seo";
 import { SidebarAds } from "@/components/SidebarAds";
 import { getPublishedArticles } from "@/lib/db";
 import { NewsletterForm } from "@/components/article/NewsletterForm";
@@ -25,13 +25,15 @@ export async function SidebarRight({ trendingArticles }: SidebarRightProps = {})
           {trending.map((article) => (
             <li key={article.id}>
               <Link
-                href={`/article/${article.slug}`}
+                href={articlePublicPath(article.slug)}
                 className="line-clamp-2 text-sm font-medium text-ink hover:text-primary-600"
               >
                 {article.title}
               </Link>
               <p className="text-xs text-gray-500">
-                {article.category?.name ?? "News"}
+                {article.categories?.length
+                  ? article.categories.map((c) => c.name).join(" · ")
+                  : (article.category?.name ?? "News")}
               </p>
             </li>
           ))}

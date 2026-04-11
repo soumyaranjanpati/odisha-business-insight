@@ -61,6 +61,13 @@ export interface Article {
   reading_time_minutes: number | null;
   meta_title: string | null;
   meta_description: string | null;
+  /** Odisha impact / “why it matters” block (plain text or light HTML from CMS). */
+  why_this_matters?: string | null;
+  /** Attribution line (e.g. source domains). */
+  source?: string | null;
+  /** Public byline — distinct from logged-in author_id. */
+  author_name?: string | null;
+  author_slug?: string | null;
   /** Gated content; requires premium subscription to view full body. */
   is_premium?: boolean;
   /** Display "Sponsored" label and optional sponsor name. */
@@ -69,6 +76,8 @@ export interface Article {
   created_at: string;
   updated_at: string;
   category?: Category;
+  /** All categories when loaded from `article_categories` (multi-select). */
+  categories?: Category[];
   tags?: Tag[];
   author?: UserProfile;
 }
@@ -106,6 +115,7 @@ export interface UserSubscription {
 
 export interface ArticleWithRelations extends Article {
   category: Category;
+  categories?: Category[];
   tags: Tag[];
   author?: UserProfile;
 }

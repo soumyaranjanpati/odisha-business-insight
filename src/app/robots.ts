@@ -1,11 +1,10 @@
 import type { MetadataRoute } from "next";
-import { getBaseUrl } from "@/lib/seo";
+import { getCanonicalOrigin } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
+  const origin = getCanonicalOrigin();
   return {
-    rules: [
-      { userAgent: "*", allow: "/", disallow: ["/editor/", "/admin/", "/login", "/auth/"] },
-    ],
-    sitemap: `${getBaseUrl()}/sitemap.xml`,
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/editor/", "/admin/", "/login", "/auth/"] }],
+    sitemap: [`${origin}/sitemap.xml`, `${origin}/news-sitemap.xml`],
   };
 }

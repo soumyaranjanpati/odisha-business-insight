@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { pingGoogleNewsSitemap } from "@/lib/google-ping";
 
 export async function approveArticle(articleId: string) {
   const { allowed } = await requireAdmin();
@@ -11,7 +13,7 @@ export async function approveArticle(articleId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase
+  const { data } = await supabase
     .from("articles")
     .update({
       status: "published",
@@ -19,7 +21,17 @@ export async function approveArticle(articleId: string) {
       approved_at: new Date().toISOString(),
       published_at: new Date().toISOString(),
     })
-    .eq("id", articleId);
+    .eq("id", articleId)
+    .select("slug")
+    .single();
+
+  if (data?.slug) {
+    pingGoogleNewsSitemap();
+    revalidatePath("/sitemap.xml");
+    revalidatePath("/news-sitemap.xml");
+    revalidatePath(`/${data.slug}`);
+    revalidatePath(`/article/${data.slug}`);
+  }
 }
 
 export async function rejectArticle(articleId: string) {

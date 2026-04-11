@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { createOrUpdateArticle } from "@/app/actions/articles";
 import { uploadFeaturedArticleImage } from "@/app/actions/article-images";
+import { formatDate } from "@/lib/utils";
 import type { Article, Category, Tag } from "@/types";
 
 type ArticleStatus = Article["status"];
@@ -15,6 +16,10 @@ interface ArticleFormProps {
   categories: Category[];
   tags: Tag[];
   article?: Article & { tag_ids?: string[]; category_ids?: string[] };
+}
+
+function countNonEmptyLines(text: string): number {
+  return text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).length;
 }
 
 export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
@@ -32,6 +37,9 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
   const [metaDescription, setMetaDescription] = useState(article?.meta_description ?? "");
   const [excerpt, setExcerpt] = useState(article?.excerpt ?? "");
   const [body, setBody] = useState(article?.body ?? "");
+  const [whyThisMatters, setWhyThisMatters] = useState(article?.why_this_matters ?? "");
+  const [sourceLine, setSourceLine] = useState(article?.source ?? "");
+  const [authorSlug, setAuthorSlug] = useState(article?.author_slug ?? "");
   const [sourceUrls, setSourceUrls] = useState("");
   const [includeOpinionTone, setIncludeOpinionTone] = useState(false);
   const [articleType, setArticleType] = useState<"news" | "insight" | "viral">("news");
@@ -78,6 +86,8 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
         meta_title?: string;
         meta_description?: string;
         content_html?: string;
+        why_this_matters?: string;
+        source?: string;
         fetchedCount?: number;
         failedCount?: number;
         error?: string;
@@ -101,6 +111,8 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
       setMetaTitle(data.meta_title ?? "");
       setMetaDescription(data.meta_description ?? "");
       setBody(data.content_html ?? "");
+      setWhyThisMatters(data.why_this_matters ?? "");
+      setSourceLine(data.source ?? "");
 
       const fetchedCount = typeof data.fetchedCount === "number" ? data.fetchedCount : 0;
       const failedCount = typeof data.failedCount === "number" ? data.failedCount : 0;
@@ -133,20 +145,46 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
     const status: ArticleStatus =
       action === "publish" ? "published" : action === "pending" ? "pending" : "draft";
 
+    if (status === "published") {
+      if (!title.trim()) {
+        setError("Title is required to publish.");
+        return;
+      }
+      if (!body.trim()) {
+        setError("Content is required to publish.");
+        return;
+      }
+      if (countNonEmptyLines(excerpt) < 2) {
+        setError("Summary must be at least two lines (what happened, where, who).");
+        return;
+      }
+      if (!whyThisMatters.trim()) {
+        setError("Why This Matters for Odisha is required to publish.");
+        return;
+      }
+      if (!authorSlug.trim()) {
+        setError("Please select an author before publishing.");
+        return;
+      }
+    }
+
     startTransition(async () => {
       const result = await createOrUpdateArticle({
         id: article?.id,
-        title: formData.get("title") as string,
-        slug: formData.get("slug") as string,
-        excerpt: (formData.get("excerpt") as string) || null,
-        body: formData.get("body") as string,
+        title,
+        slug,
+        excerpt: excerpt || null,
+        body,
         category_ids: categoryIds,
         tag_ids: tagIds,
         status,
         featured_image_url: featuredImageUrl.trim() || null,
         featured_image_alt: featuredImageAlt.trim() || null,
-        meta_title: (formData.get("meta_title") as string) || null,
-        meta_description: (formData.get("meta_description") as string) || null,
+        meta_title: metaTitle || null,
+        meta_description: metaDescription || null,
+        why_this_matters: whyThisMatters || null,
+        source: sourceLine || null,
+        author_slug: authorSlug || null,
         is_premium: formData.get("is_premium") === "on",
         is_sponsored: formData.get("is_sponsored") === "on",
         sponsored_by: (formData.get("sponsored_by") as string) || null,
@@ -239,6 +277,12 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
               </button>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardContent className="space-y-4 pt-6">
+          <h2 className="headline text-lg font-semibold text-ink">Section 1 — Title &amp; URL</h2>
           <Input
             label="Title"
             name="title"
@@ -264,17 +308,32 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
             }}
             placeholder="article-url-slug"
           />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardContent className="space-y-4 pt-6">
+          <h2 className="headline text-lg font-semibold text-ink">Section 2 — Summary</h2>
+          <p className="text-xs text-gray-500">
+            Two or more lines: what happened, where, and who. Required to publish.
+          </p>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Summary</label>
             <textarea
               name="excerpt"
-              rows={2}
+              rows={4}
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-              placeholder="Short summary for listings and cards"
+              placeholder={"Line 1: what happened...\nLine 2: where / who..."}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardContent className="space-y-4 pt-6">
+          <h2 className="headline text-lg font-semibold text-ink">Section 3 — Main content</h2>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Content</label>
             <textarea
@@ -290,35 +349,124 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
               Use HTML for formatting (e.g. &lt;p&gt;, &lt;h2&gt;, &lt;a&gt;, &lt;strong&gt;).
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 border-primary-200 bg-primary-50/40">
+        <CardContent className="space-y-4 pt-6">
+          <h2 className="headline text-lg font-semibold text-ink">Section 4 — Why This Matters for Odisha</h2>
+          <p className="text-xs text-gray-600">
+            Economic, business, or policy impact on Odisha. Required to publish.
+          </p>
           <div>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-medium text-gray-700">Meta title &amp; description (SEO)</p>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Why this matters</label>
+            <textarea
+              name="why_this_matters"
+              rows={5}
+              value={whyThisMatters}
+              onChange={(e) => setWhyThisMatters(e.target.value)}
+              className="block w-full rounded-lg border border-primary-200 bg-white px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              placeholder="Odisha-specific insight: jobs, investment, MSMEs, policy, infrastructure..."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardContent className="space-y-4 pt-6">
+          <h2 className="headline text-lg font-semibold text-ink">Section 5 — Source</h2>
+          <p className="text-xs text-gray-500">
+            Auto-filled when you use Generate Article; edit freely (e.g. outlet names or domains).
+          </p>
+          <Input
+            label="Source"
+            name="source"
+            value={sourceLine}
+            onChange={(e) => setSourceLine(e.target.value)}
+            placeholder="e.g. Sources: example.com, news.outlet.in"
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardContent className="space-y-6 pt-6">
+          <h2 className="headline text-lg font-semibold text-ink">Section 6 — Metadata</h2>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Author (byline) <span className="text-red-600">*</span>
+            </label>
+            <select
+              name="author_slug"
+              value={authorSlug}
+              onChange={(e) => setAuthorSlug(e.target.value)}
+              className="block max-w-md rounded-lg border border-gray-300 px-3 py-2 text-ink focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="">Select author (required to publish)</option>
+              <option value="ranjan">Ranjan</option>
+              <option value="priyanshu">Priyanshu</option>
+            </select>
+          </div>
+
+          {isEdit && article && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50/80 px-4 py-3 text-sm text-gray-700">
+              <p className="font-medium text-gray-800">Dates</p>
+              <p className="mt-1">
+                <span className="text-gray-500">Publish date: </span>
+                {article.published_at ? formatDate(article.published_at) : "— (not published yet)"}
+              </p>
+              <p className="mt-1">
+                <span className="text-gray-500">Last updated: </span>
+                {formatDate(article.updated_at)}
+              </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                label="Meta title (SEO)"
-                name="meta_title"
-                value={metaTitle}
-                onChange={(e) => setMetaTitle(e.target.value)}
-              />
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Meta description (SEO)
+          )}
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Categories</label>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((c) => (
+                <label key={c.id} className="inline-flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    name="category_ids"
+                    value={c.id}
+                    defaultChecked={
+                      article?.category_ids?.includes(c.id) || article?.category_id === c.id
+                    }
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm">{c.name}</span>
                 </label>
-                <textarea
-                  name="meta_description"
-                  rows={2}
-                  value={metaDescription}
-                  onChange={(e) => setMetaDescription(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                />
-              </div>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Select at least one category. The first selected category is primary.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Tags</label>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((t) => (
+                <label key={t.id} className="inline-flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    name="tag_ids"
+                    value={t.id}
+                    defaultChecked={article?.tag_ids?.includes(t.id)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm">{t.name}</span>
+                </label>
+              ))}
             </div>
           </div>
+
           <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
             <p className="text-sm font-medium text-gray-800">Featured image</p>
             <p className="mt-1 text-xs text-gray-500">
-              Upload to Supabase storage, or paste any image URL below. URL stays editable after upload.
+              Upload to Supabase storage, or paste any image URL below.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <input
@@ -381,7 +529,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
                 name="featured_image_url"
                 value={featuredImageUrl}
                 onChange={(e) => setFeaturedImageUrl(e.target.value)}
-                placeholder="https://... (filled after upload or paste manually)"
+                placeholder="https://..."
               />
               <Input
                 label="Featured image alt text"
@@ -392,48 +540,34 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
               />
             </div>
           </div>
+
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Categories</label>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((c) => (
-                <label key={c.id} className="inline-flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    name="category_ids"
-                    value={c.id}
-                    defaultChecked={
-                      article?.category_ids?.includes(c.id) || article?.category_id === c.id
-                    }
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm">{c.name}</span>
-                </label>
-              ))}
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-gray-700">Meta title &amp; description (SEO)</p>
             </div>
-            <p className="mt-1 text-xs text-gray-500">
-              Select one or more categories. The first selected category is used as primary.
+            <p className="mb-2 text-xs text-gray-500">
+              If meta title is empty, the article title is used on the public site.
             </p>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Tags</label>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((t) => (
-                <label key={t.id} className="inline-flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    name="tag_ids"
-                    value={t.id}
-                    defaultChecked={article?.tag_ids?.includes(t.id)}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm">{t.name}</span>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Meta title (SEO)"
+                name="meta_title"
+                value={metaTitle}
+                onChange={(e) => setMetaTitle(e.target.value)}
+              />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Meta description (SEO)
                 </label>
-              ))}
+                <textarea
+                  name="meta_description"
+                  rows={2}
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                />
+              </div>
             </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Draft / Publish</label>
-            <p className="text-xs text-gray-500">Use the buttons below to save as draft or publish.</p>
           </div>
 
           <div className="border-t border-gray-200 pt-4">
@@ -466,6 +600,11 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
               className="mt-3 max-w-xs"
             />
           </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Draft / Publish</label>
+            <p className="text-xs text-gray-500">Use the buttons below to save as draft or publish.</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -482,12 +621,7 @@ export function ArticleForm({ categories, tags, article }: ArticleFormProps) {
         >
           Save draft
         </Button>
-        <Button
-          type="submit"
-          name="submit_action"
-          value="publish"
-          isLoading={isPending}
-        >
+        <Button type="submit" name="submit_action" value="publish" isLoading={isPending}>
           Publish
         </Button>
         {isEdit && (
