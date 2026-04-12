@@ -163,13 +163,14 @@ export async function ArticlePageView({ slug }: { slug: string }) {
           </div>
 
           {article.featured_image_url && (
-            <div className="relative mt-6 aspect-video overflow-hidden rounded-xl bg-gray-100">
+            <div className="mt-6 overflow-hidden rounded-xl bg-gray-100">
               <Image
                 src={article.featured_image_url}
                 alt={article.featured_image_alt ?? article.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 1200px"
+                width={1200}
+                height={800}
+                className="h-auto w-full object-contain"
+                sizes="(max-width: 768px) 100vw, 768px"
                 priority
                 fetchPriority="high"
               />
