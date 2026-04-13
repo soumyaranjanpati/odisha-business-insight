@@ -31,7 +31,7 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
               src={article.featured_image_url}
               alt={article.featured_image_alt ?? article.title}
               fill
-              className="object-cover transition-transform group-hover:scale-105"
+              className="object-cover object-center transition-transform group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 1200px"
               priority={priority}
               fetchPriority={priority ? "high" : undefined}

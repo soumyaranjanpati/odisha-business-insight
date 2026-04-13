@@ -163,14 +163,14 @@ export async function ArticlePageView({ slug }: { slug: string }) {
           </div>
 
           {article.featured_image_url && (
-            <div className="mt-6 overflow-hidden rounded-xl bg-gray-100">
+            <div className="mt-6 overflow-hidden rounded-xl bg-gray-100 md:w-[63%]">
               <Image
                 src={article.featured_image_url}
                 alt={article.featured_image_alt ?? article.title}
                 width={1200}
                 height={800}
                 className="h-auto w-full object-contain"
-                sizes="(max-width: 768px) 100vw, 768px"
+                sizes="(max-width: 768px) 100vw, 63vw"
                 priority
                 fetchPriority="high"
               />
