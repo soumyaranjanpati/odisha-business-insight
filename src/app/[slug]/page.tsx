@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArticlePageView } from "@/components/article/ArticlePageView";
 import { generateArticlePageMetadata } from "@/lib/article-metadata";
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ slug: string }>;

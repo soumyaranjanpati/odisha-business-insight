@@ -3,11 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   getArticleViewsCount,
-  getAuthorDisplayNameForStaff,
   getPublishedArticleBySlug,
+  getPublishedArticles,
   getRelatedArticles,
 } from "@/lib/db";
-import { getProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
 import {
   articleCanonicalUrl,
@@ -19,35 +18,28 @@ import {
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ArticleBadges } from "@/components/article/ArticleBadges";
 import { ShareBar } from "@/components/article/ShareBar";
-import { PremiumCta } from "@/components/article/PremiumCta";
 import { RecordArticleView } from "@/components/article/RecordArticleView";
-import { hasActivePremiumSubscription } from "@/lib/subscription";
 import { ArticleBreadcrumbs } from "@/components/article/Breadcrumbs";
 import { SidebarRight } from "@/components/SidebarRight";
+import { ArticlePremiumBody } from "@/components/article/ArticlePremiumBody";
+import { ArticleStaffMeta } from "@/components/article/ArticleStaffMeta";
 
 export async function ArticlePageView({ slug }: { slug: string }) {
   const article = await getPublishedArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = await getRelatedArticles(article, 5);
-  const category = article.category;
-  const isPremium = article.is_premium ?? false;
-  const hasPremiumAccess = await hasActivePremiumSubscription();
-  const showGatedContent = isPremium && !hasPremiumAccess;
+  const [related, trending, articleViewsCount] = await Promise.all([
+    getRelatedArticles(article, 5),
+    getPublishedArticles({ limit: 5, offset: 0 }).then((r) => r.data),
+    getArticleViewsCount(article.id),
+  ]);
 
-  const profile = await getProfile();
-  const isEditorialStaff =
-    profile?.roleName === "editor" || profile?.roleName === "admin";
-  const staffPosterName =
-    isEditorialStaff && article.author_id
-      ? await getAuthorDisplayNameForStaff(article.author_id)
-      : null;
-  const articleViewsCount = await getArticleViewsCount(article.id);
+  const category = article.category;
+  const bylineName = article.author_name?.trim() ?? null;
+  const bylineSlug = article.author_slug?.trim() ?? null;
 
   const articleUrl = articleCanonicalUrl(article.slug);
   const baseUrl = getBaseUrl();
-  const bylineName = article.author_name?.trim();
-  const bylineSlug = article.author_slug?.trim();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -130,22 +122,11 @@ export async function ArticlePageView({ slug }: { slug: string }) {
             </span>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-            {staffPosterName && (
-              <span
-                className="text-xs text-gray-600 sm:text-sm"
-                title="Visible to editors and admins only"
-              >
-                Added by{" "}
-                <span className="font-medium text-gray-700">{staffPosterName}</span>
-              </span>
-            )}
+            <ArticleStaffMeta authorId={article.author_id} />
             {category && (
-              <>
-                {staffPosterName && <span aria-hidden>•</span>}
-                <Link href={`/category/${category.slug}`} className="hover:underline">
-                  {category.name}
-                </Link>
-              </>
+              <Link href={`/category/${category.slug}`} className="hover:underline">
+                {category.name}
+              </Link>
             )}
             {article.reading_time_minutes && (
               <>
@@ -177,73 +158,21 @@ export async function ArticlePageView({ slug }: { slug: string }) {
             </div>
           )}
 
-          {showGatedContent ? (
-            <>
-              {article.excerpt && (
-                <div className="mt-8 rounded-r-lg border-l-4 border-primary-500 bg-primary-50/60 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary-800">
-                    Summary
-                  </p>
-                  <p className="mt-2 whitespace-pre-line text-lg leading-relaxed text-gray-800">
-                    {article.excerpt}
-                  </p>
-                </div>
-              )}
-              <PremiumCta className="mt-8" />
-            </>
-          ) : (
-            <>
-              {article.excerpt && (
-                <div className="mt-8 rounded-r-lg border-l-4 border-primary-500 bg-primary-50/60 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary-800">
-                    Summary
-                  </p>
-                  <p className="mt-2 whitespace-pre-line text-lg leading-relaxed text-gray-800">
-                    {article.excerpt}
-                  </p>
-                </div>
-              )}
-              <div
-                className="prose-obi mt-8"
-                dangerouslySetInnerHTML={{ __html: article.body }}
-              />
-              {article.why_this_matters?.trim() && (
-                <div className="mt-10 rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-                    Why This Matters for Odisha
-                  </p>
-                  <p className="mt-2 whitespace-pre-line text-base leading-relaxed text-gray-900">
-                    {article.why_this_matters.trim()}
-                  </p>
-                </div>
-              )}
-              {article.source?.trim() && (
-                <p className="mt-8 text-sm text-gray-600">
-                  <span className="font-medium text-gray-700">Source: </span>
-                  {article.source.trim()}
-                </p>
-              )}
-              <p className="mt-6 text-sm text-gray-600">
-                <span className="font-medium text-gray-800">By </span>
-                {bylineName && bylineSlug ? (
-                  <Link
-                    href={`/author/${bylineSlug}`}
-                    className="font-medium text-primary-700 hover:underline"
-                  >
-                    {bylineName}
-                  </Link>
-                ) : (
-                  <span className="font-medium text-gray-800">{SITE_NAME}</span>
-                )}
-              </p>
-            </>
-          )}
+          <ArticlePremiumBody
+            isPremium={article.is_premium ?? false}
+            excerpt={article.excerpt}
+            body={article.body}
+            whyThisMatters={article.why_this_matters ?? null}
+            source={article.source ?? null}
+            bylineName={bylineName}
+            bylineSlug={bylineSlug}
+          />
 
           <ShareBar title={article.title} slug={article.slug} />
         </article>
 
         <div className="mt-6 lg:mt-0">
-          <SidebarRight />
+          <SidebarRight trendingArticles={trending} />
         </div>
       </div>
 

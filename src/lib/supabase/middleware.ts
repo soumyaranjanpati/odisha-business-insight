@@ -1,8 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function isProtectedPath(pathname: string): boolean {
+  return (
+    pathname === "/editor" ||
+    pathname.startsWith("/editor/") ||
+    pathname.startsWith("/admin") ||
+    pathname === "/auth/login" ||
+    pathname === "/profile"
+  );
+}
+
 /**
  * Middleware: refresh auth session and protect /editor and /admin routes.
+ * Public pages use a lighter session refresh (no remote getUser validation).
  */
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({
@@ -26,13 +37,17 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  const pathname = request.nextUrl.pathname;
+
+  if (!isProtectedPath(pathname)) {
+    await supabase.auth.getSession();
+    return response;
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
-  // Protect editor dashboard only: /editor and /editor/... (not /editorial-policy, etc.)
   const isEditorAppRoute = pathname === "/editor" || pathname.startsWith("/editor/");
   if (isEditorAppRoute) {
     if (!user) {
@@ -41,11 +56,9 @@ export async function updateSession(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
-    // Role check done in layout via getProfile
     return response;
   }
 
-  // Protect admin dashboard: require auth + admin role
   if (pathname.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -56,10 +69,16 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
-  // Redirect logged-in users away from login if they hit /auth/login
   if (pathname === "/auth/login" && user) {
     const redirect = request.nextUrl.searchParams.get("redirect") || "/";
     return NextResponse.redirect(new URL(redirect, request.url));
+  }
+
+  if (pathname === "/profile" && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
   }
 
   return response;

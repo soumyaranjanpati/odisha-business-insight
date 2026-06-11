@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublishedArticlesByAuthorSlug } from "@/lib/db";
+export const revalidate = 60;
 import { canonicalUrl, SITE_NAME } from "@/lib/seo";
 import { AUTHOR_ROLE, getAuthorBySlug } from "@/lib/authors";
 import { ArticleCard } from "@/components/article/ArticleCard";

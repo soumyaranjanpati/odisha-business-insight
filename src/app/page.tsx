@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getPublishedArticles } from "@/lib/db";
+export const revalidate = 60;
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { CATEGORY_NAV } from "@/lib/categories";
 import { SidebarRight } from "@/components/SidebarRight";

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicContent } from "@/lib/revalidate-public";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { pingGoogleNewsSitemap } from "@/lib/google-ping";
@@ -29,8 +30,7 @@ export async function approveArticle(articleId: string) {
     pingGoogleNewsSitemap();
     revalidatePath("/sitemap.xml");
     revalidatePath("/news-sitemap.xml");
-    revalidatePath(`/${data.slug}`);
-    revalidatePath(`/article/${data.slug}`);
+    revalidatePublicContent(data.slug);
   }
 }
 

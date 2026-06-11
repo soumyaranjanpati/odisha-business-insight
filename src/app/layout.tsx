@@ -1,15 +1,21 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Suspense } from "react";
 import "./globals.css";
-import { HeaderWithAuth } from "@/components/layout/HeaderWithAuth";
-import { HeaderSkeleton } from "@/components/layout/HeaderSkeleton";
+import { HeaderWithClientAuth } from "@/components/layout/HeaderWithClientAuth";
 import { Footer } from "@/components/layout/Footer";
-import { Preconnect } from "@/components/seo/Preconnect";
 import { getBaseUrl, getCanonicalOrigin, getWebSiteSchemaUrl, SITE_NAME, SITE_DESCRIPTION } from "@/lib/seo";
 
-// Ensure auth (header role) is never cached so role-based nav is correct
-export const dynamic = "force-dynamic";
+function supabasePreconnectOrigin(): string | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return null;
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
+const supabaseOrigin = supabasePreconnectOrigin();
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -84,6 +90,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {supabaseOrigin && (
+          <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
@@ -94,7 +103,6 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-white text-ink antialiased">
-        <Preconnect />
         {GA_ID && (
           <>
             <Script
@@ -111,9 +119,7 @@ export default function RootLayout({
             </Script>
           </>
         )}
-        <Suspense fallback={<HeaderSkeleton />}>
-          <HeaderWithAuth />
-        </Suspense>
+        <HeaderWithClientAuth />
         <main className="flex-1" id="main-content">
           {children}
         </main>

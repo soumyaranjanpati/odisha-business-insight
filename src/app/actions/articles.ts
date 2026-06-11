@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicContent } from "@/lib/revalidate-public";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { pingGoogleNewsSitemap } from "@/lib/google-ping";
@@ -47,8 +48,7 @@ function onArticlePublished(slug: string) {
   pingGoogleNewsSitemap();
   revalidatePath("/sitemap.xml");
   revalidatePath("/news-sitemap.xml");
-  revalidatePath(`/${slug}`);
-  revalidatePath(`/article/${slug}`);
+  revalidatePublicContent(slug);
 }
 
 function truncateSmart(text: string, max = 160): string {

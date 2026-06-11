@@ -1,13 +1,36 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS } from "@/lib/cache";
 import type { ArticleWithRelations, Category } from "@/types";
 
-/** Select fragment: primary category + junction categories + tags. */
-const ARTICLE_WITH_RELATIONS_SELECT = `
-  *,
+const ARTICLE_RELATIONS = `
   category:categories!articles_category_id_fkey(*),
   article_categories(category:categories(*)),
   tags:article_tags(tag:tags(*))
 `;
+
+/** List/card views — excludes heavy `body` HTML. */
+const ARTICLE_LIST_SELECT = `
+  id, author_id, category_id, title, slug, excerpt, featured_image_url, featured_image_alt,
+  status, published_at, reading_time_minutes, meta_title, meta_description,
+  why_this_matters, source, author_name, author_slug, is_premium, is_sponsored, sponsored_by,
+  created_at, updated_at,
+  ${ARTICLE_RELATIONS}
+`;
+
+/** Single-article view — includes full body. */
+const ARTICLE_DETAIL_SELECT = `
+  *,
+  ${ARTICLE_RELATIONS}
+`;
+
+function getPublicReadClient() {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return createServiceRoleClient();
+  }
+  return null;
+}
 
 function extractCategoriesFromRow(row: Record<string, unknown>): Category[] {
   const primary = Array.isArray(row.category) ? row.category[0] : row.category;
@@ -25,18 +48,28 @@ function extractCategoriesFromRow(row: Record<string, unknown>): Category[] {
   return [...byId.values()].sort((a, b) => a.sort_order - b.sort_order);
 }
 
-/**
- * Fetch published articles with category and tags.
- * Category filter includes any article linked in `article_categories` OR whose primary `category_id` matches
- * (so multi-category posts appear on every selected category page).
- */
-export async function getPublishedArticles(options: {
+function normalizeArticles(rows: Record<string, unknown>[]): ArticleWithRelations[] {
+  return rows.map((row) => {
+    const tags = (row.tags as { tag: unknown }[] | undefined) ?? [];
+    const { article_categories, ...rest } = row;
+    void article_categories;
+    return {
+      ...rest,
+      body: typeof row.body === "string" ? row.body : "",
+      category: Array.isArray(row.category) ? row.category[0] : row.category,
+      categories: extractCategoriesFromRow(row),
+      tags: tags.map((t) => (t as { tag: unknown }).tag).filter(Boolean),
+    };
+  }) as ArticleWithRelations[];
+}
+
+async function fetchPublishedArticles(options: {
   limit?: number;
   offset?: number;
   categorySlug?: string;
   tagSlug?: string;
 }) {
-  const supabase = await createClient();
+  const supabase = getPublicReadClient() ?? (await createClient());
   const { limit = 10, offset = 0, categorySlug, tagSlug } = options;
   const now = new Date().toISOString();
 
@@ -74,7 +107,7 @@ export async function getPublishedArticles(options: {
       .from("article_tags")
       .select("article_id")
       .eq("tag_id", tag.id);
-    const tagIds = new Set((tagLinks ?? []).map((r) => r.article_id));
+    const tagIds = new Set<string>((tagLinks ?? []).map((r: { article_id: string }) => r.article_id));
 
     if (idFilter !== null) {
       idFilter = idFilter.filter((id) => tagIds.has(id));
@@ -86,7 +119,7 @@ export async function getPublishedArticles(options: {
 
   let dataQuery = supabase
     .from("articles")
-    .select(ARTICLE_WITH_RELATIONS_SELECT)
+    .select(ARTICLE_LIST_SELECT)
     .eq("status", "published")
     .lte("published_at", now)
     .order("published_at", { ascending: false });
@@ -122,31 +155,29 @@ export async function getPublishedArticles(options: {
   return { data: articles, total: totalCount ?? articles.length };
 }
 
-function normalizeArticles(rows: Record<string, unknown>[]): ArticleWithRelations[] {
-  return rows.map((row) => {
-    const tags = (row.tags as { tag: unknown }[] | undefined) ?? [];
-    const { article_categories, ...rest } = row;
-    void article_categories;
-    return {
-      ...rest,
-      category: Array.isArray(row.category) ? row.category[0] : row.category,
-      categories: extractCategoriesFromRow(row),
-      tags: tags.map((t) => (t as { tag: unknown }).tag).filter(Boolean),
-    };
-  }) as ArticleWithRelations[];
+/**
+ * Fetch published articles with category and tags.
+ * Category filter includes any article linked in `article_categories` OR whose primary `category_id` matches
+ * (so multi-category posts appear on every selected category page).
+ */
+export async function getPublishedArticles(options: {
+  limit?: number;
+  offset?: number;
+  categorySlug?: string;
+  tagSlug?: string;
+}) {
+  const cacheKey = JSON.stringify(options);
+  return unstable_cache(() => fetchPublishedArticles(options), ["published-articles", cacheKey], {
+    revalidate: PUBLIC_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.articles],
+  })();
 }
 
-/**
- * Fetch a single published article by slug.
- */
-export async function getPublishedArticleBySlug(slug: string) {
-  // Prefer service role to avoid RLS edge cases for public article view.
-  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createServiceRoleClient()
-    : await createClient();
+async function fetchPublishedArticleBySlug(slug: string) {
+  const supabase = getPublicReadClient() ?? (await createClient());
   const { data, error } = await supabase
     .from("articles")
-    .select(ARTICLE_WITH_RELATIONS_SELECT)
+    .select(ARTICLE_DETAIL_SELECT)
     .eq("slug", slug)
     .eq("status", "published")
     .single();
@@ -157,88 +188,114 @@ export async function getPublishedArticleBySlug(slug: string) {
 }
 
 /**
+ * Fetch a single published article by slug.
+ * Wrapped in React `cache()` so metadata + page share one fetch per request.
+ */
+export const getPublishedArticleBySlug = cache(async (slug: string) => {
+  return unstable_cache(() => fetchPublishedArticleBySlug(slug), ["published-article", slug], {
+    revalidate: PUBLIC_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.articles, `article-${slug}`],
+  })();
+});
+
+/**
  * Related articles: merge same-category and shared-tag matches, deduped, newest first.
  */
 export async function getRelatedArticles(article: ArticleWithRelations, limit = 5) {
-  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createServiceRoleClient()
-    : await createClient();
-  const now = new Date().toISOString();
-  const tagIds = article.tags?.map((t) => t.id).filter(Boolean) ?? [];
+  const articleId = article.id;
+  return unstable_cache(
+    async () => {
+      const supabase = getPublicReadClient() ?? (await createClient());
+      const now = new Date().toISOString();
+      const tagIds = article.tags?.map((t) => t.id).filter(Boolean) ?? [];
 
-  const { data: byCategory } = await supabase
-    .from("articles")
-    .select(ARTICLE_WITH_RELATIONS_SELECT)
-    .eq("status", "published")
-    .lte("published_at", now)
-    .eq("category_id", article.category_id)
-    .neq("id", article.id)
-    .order("published_at", { ascending: false })
-    .limit(18);
-
-  let byTags: Record<string, unknown>[] = [];
-  if (tagIds.length) {
-    const { data: links } = await supabase
-      .from("article_tags")
-      .select("article_id")
-      .in("tag_id", tagIds);
-
-    const ids = [
-      ...new Set(
-        (links ?? [])
-          .map((l: { article_id: string }) => l.article_id)
-          .filter((id: string) => Boolean(id) && id !== article.id)
-      ),
-    ].slice(0, 30);
-
-    if (ids.length) {
-      const { data: tagArticles } = await supabase
+      const { data: byCategory } = await supabase
         .from("articles")
-        .select(ARTICLE_WITH_RELATIONS_SELECT)
+        .select(ARTICLE_LIST_SELECT)
         .eq("status", "published")
         .lte("published_at", now)
-        .in("id", ids)
+        .eq("category_id", article.category_id)
+        .neq("id", articleId)
         .order("published_at", { ascending: false })
         .limit(18);
-      byTags = (tagArticles ?? []) as Record<string, unknown>[];
-    }
-  }
 
-  const merged = new Map<string, Record<string, unknown>>();
-  for (const row of [...byTags, ...((byCategory ?? []) as Record<string, unknown>[])]) {
-    const id = row.id as string;
-    if (id && !merged.has(id)) merged.set(id, row);
-  }
-  const combined = [...merged.values()].sort(
-    (a, b) =>
-      new Date((b.published_at as string) ?? 0).getTime() -
-      new Date((a.published_at as string) ?? 0).getTime()
-  );
-  return normalizeArticles(combined.slice(0, limit));
+      let byTags: Record<string, unknown>[] = [];
+      if (tagIds.length) {
+        const { data: links } = await supabase
+          .from("article_tags")
+          .select("article_id")
+          .in("tag_id", tagIds);
+
+        const ids = [
+          ...new Set(
+            (links ?? [])
+              .map((l: { article_id: string }) => l.article_id)
+              .filter((id: string) => Boolean(id) && id !== articleId)
+          ),
+        ].slice(0, 30);
+
+        if (ids.length) {
+          const { data: tagArticles } = await supabase
+            .from("articles")
+            .select(ARTICLE_LIST_SELECT)
+            .eq("status", "published")
+            .lte("published_at", now)
+            .in("id", ids)
+            .order("published_at", { ascending: false })
+            .limit(18);
+          byTags = (tagArticles ?? []) as Record<string, unknown>[];
+        }
+      }
+
+      const merged = new Map<string, Record<string, unknown>>();
+      for (const row of [...byTags, ...((byCategory ?? []) as Record<string, unknown>[])]) {
+        const id = row.id as string;
+        if (id && !merged.has(id)) merged.set(id, row);
+      }
+      const combined = [...merged.values()].sort(
+        (a, b) =>
+          new Date((b.published_at as string) ?? 0).getTime() -
+          new Date((a.published_at as string) ?? 0).getTime()
+      );
+      return normalizeArticles(combined.slice(0, limit));
+    },
+    ["related-articles", articleId, String(limit)],
+    {
+      revalidate: PUBLIC_REVALIDATE_SECONDS,
+      tags: [CACHE_TAGS.articles, `article-${article.slug}`],
+    }
+  )();
 }
 
 /**
  * Published articles by public byline slug (for /author/:slug).
  */
 export async function getPublishedArticlesByAuthorSlug(authorSlug: string, limit = 50) {
-  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createServiceRoleClient()
-    : await createClient();
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("articles")
-    .select(ARTICLE_WITH_RELATIONS_SELECT)
-    .eq("status", "published")
-    .eq("author_slug", authorSlug)
-    .lte("published_at", now)
-    .order("published_at", { ascending: false })
-    .limit(limit);
+  return unstable_cache(
+    async () => {
+      const supabase = getPublicReadClient() ?? (await createClient());
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("articles")
+        .select(ARTICLE_LIST_SELECT)
+        .eq("status", "published")
+        .eq("author_slug", authorSlug)
+        .lte("published_at", now)
+        .order("published_at", { ascending: false })
+        .limit(limit);
 
-  if (error) {
-    console.error("getPublishedArticlesByAuthorSlug:", error);
-    return [];
-  }
-  return normalizeArticles((data ?? []) as Record<string, unknown>[]);
+      if (error) {
+        console.error("getPublishedArticlesByAuthorSlug:", error);
+        return [];
+      }
+      return normalizeArticles((data ?? []) as Record<string, unknown>[]);
+    },
+    ["author-articles", authorSlug, String(limit)],
+    {
+      revalidate: PUBLIC_REVALIDATE_SECONDS,
+      tags: [CACHE_TAGS.articles],
+    }
+  )();
 }
 
 export type NewsSitemapEntry = {
@@ -284,14 +341,23 @@ export async function getFeaturedArticles(limit = 3) {
 /**
  * Fetch all categories for nav/footer.
  */
-export async function getCategories() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("sort_order", { ascending: true });
-  if (error) return [];
-  return data ?? [];
+export async function getCategories(): Promise<Category[]> {
+  return unstable_cache(
+    async (): Promise<Category[]> => {
+      const supabase = getPublicReadClient() ?? (await createClient());
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      if (error) return [];
+      return (data ?? []) as Category[];
+    },
+    ["categories"],
+    {
+      revalidate: PUBLIC_REVALIDATE_SECONDS,
+      tags: [CACHE_TAGS.categories],
+    }
+  )();
 }
 
 /**
@@ -302,10 +368,10 @@ export async function searchArticles(q: string, limit = 20) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("articles")
-    .select(ARTICLE_WITH_RELATIONS_SELECT)
+    .select(ARTICLE_LIST_SELECT)
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
-    .or(`title.ilike.%${q.trim()}%,excerpt.ilike.%${q.trim()}%,body.ilike.%${q.trim()}%`)
+    .or(`title.ilike.%${q.trim()}%,excerpt.ilike.%${q.trim()}%`)
     .order("published_at", { ascending: false })
     .limit(limit);
 
@@ -345,13 +411,22 @@ export async function getAuthorDisplayNameForStaff(authorId: string): Promise<st
  */
 export async function getArticleViewsCount(articleId: string): Promise<number | null> {
   if (!articleId) return null;
-  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createServiceRoleClient()
-    : await createClient();
-  const { count, error } = await supabase
-    .from("article_views")
-    .select("id", { count: "exact", head: true })
-    .eq("article_id", articleId);
-  if (error) return null;
-  return count ?? 0;
+  return unstable_cache(
+    async () => {
+      const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+        ? createServiceRoleClient()
+        : await createClient();
+      const { count, error } = await supabase
+        .from("article_views")
+        .select("id", { count: "exact", head: true })
+        .eq("article_id", articleId);
+      if (error) return null;
+      return count ?? 0;
+    },
+    ["article-views", articleId],
+    {
+      revalidate: PUBLIC_REVALIDATE_SECONDS,
+      tags: [CACHE_TAGS.articles, `article-views-${articleId}`],
+    }
+  )();
 }

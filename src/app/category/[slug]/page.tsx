@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPublishedArticles, getCategories } from "@/lib/db";
+export const revalidate = 60;
 import { canonicalUrl, SITE_NAME } from "@/lib/seo";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ArticleListSkeleton } from "@/components/ui/Skeleton";
@@ -10,9 +11,6 @@ interface PageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 }
-
-// Category pages are dynamic (getCategories uses request-scoped Supabase).
-// Omit generateStaticParams to avoid cookies() outside request scope.
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

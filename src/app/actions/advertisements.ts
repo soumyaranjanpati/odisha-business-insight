@@ -3,6 +3,7 @@
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getProfile, getUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { revalidatePublicContent } from "@/lib/revalidate-public";
 
 const BUCKET = "advertisement-images";
 
@@ -84,7 +85,7 @@ export async function saveAdvertisement(
     if (error) return { success: false, message: error.message };
     revalidatePath("/editor/advertisements");
     revalidatePath("/editor/advertisements/new");
-    revalidatePath("/");
+    revalidatePublicContent();
     revalidatePath("/article/[slug]", "page");
     revalidatePath("/[slug]", "page");
     return { success: true, id: data.id };
@@ -94,7 +95,7 @@ export async function saveAdvertisement(
   if (error) return { success: false, message: error.message };
   revalidatePath("/editor/advertisements");
   revalidatePath("/editor/advertisements/new");
-  revalidatePath("/");
+  revalidatePublicContent();
   revalidatePath("/article/[slug]", "page");
   revalidatePath("/[slug]", "page");
   return { success: true, id: row.id };
@@ -109,7 +110,7 @@ export async function deleteAdvertisement(id: string): Promise<{ success: boolea
   const { error } = await supabase.from("advertisements").delete().eq("id", id);
   if (error) return { success: false, message: error.message };
   revalidatePath("/editor/advertisements");
-  revalidatePath("/");
+  revalidatePublicContent();
   revalidatePath("/article/[slug]", "page");
   revalidatePath("/[slug]", "page");
   return { success: true, message: "Ad deleted" };
